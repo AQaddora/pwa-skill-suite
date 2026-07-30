@@ -1,0 +1,42 @@
+name: ci
+
+# Coverage CI. Keeps the catalog, its generated docs, the scanner tests, and the
+# skills honest — and publishes the coverage numbers the README quotes, so the
+# README cannot drift into overclaiming.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate catalog against schema
+        run: node packages/catalog/validate.mjs
+
+      - name: Publish coverage numbers (the README must match these)
+        run: node packages/catalog/stats.mjs
+
+      - name: Assert docs/catalog.md is in sync with catalog.json
+        # The markdown is generated from the JSON. --check fails if a human
+        # hand-edited the doc or forgot to regenerate after a catalog change.
+        run: node packages/catalog/generate-md.mjs --check
+
+      - name: Run the test suite
+        run: npm test
+
+      - name: Lint skills (frontmatter + catalog-ID citations)
+        # Fails if any SKILL.md is missing frontmatter, has no trigger phrase,
+        # or cites a catalog ID the catalog does not define.
+        run: node skills/lint-skills.mjs
+
+      - name: Installer dry-run (lists the installed skills)
+        run: bash install.sh --dry-run

@@ -1,0 +1,3368 @@
+[
+  {
+    "id": "P-101",
+    "title": "Input focus zooms the whole page",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": "<input class=\"text-sm\">` / `font-size: 14px` on form controls.",
+    "symptom": "iOS Safari auto-zooms any focused control whose computed font-size < 16px, then never zooms back. The app instantly reads as a website.",
+    "correct": "Computed font-size >= 16px on every input, select, textarea. If the design needs smaller text, shrink with padding/line-height, not font-size. Do not fix this by disabling zoom (see P-701).",
+    "detectNotes": "Reclassified: computed font-size cannot be read from source alone (Tailwind/CSS cascade + inheritance resolve it at render time). Phase 2 will implement this as a computed-style/DOM sweep: focus each control, assert visualViewport.scale === 1, and read computed font-size directly. [D] real iOS confirm.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-102",
+    "title": "`100vh` is wrong on mobile",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "`h-screen`, `min-h-screen`, `height: 100vh`.",
+    "symptom": "iOS `vh` is sized to the expanded viewport, ignoring the URL bar. Bottom content and fixed CTAs sit below the fold; a full-height layout scrolls when it shouldn't.",
+    "correct": "`100dvh` with a `100vh` fallback for old engines; or the `--vh` JS custom-property pattern where `dvh` isn't viable. Know the family: `svh` (smallest/URL-bar-visible), `lvh` (largest), `dvh` (dynamic).",
+    "detectNotes": "[S] flag `100vh` / `h-screen` in any layout-critical rule. [R] assert no vertical overflow with the URL bar simulated. Advisory: `h-screen` is legitimate inside a fixed shell — flag, don't fail.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-103",
+    "title": "Safe-area insets ignored (notch + home indicator)",
+    "section": "ios-webkit",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "A fixed bottom tab bar with `padding-bottom: 12px`; no `viewport-fit=cover`.",
+    "symptom": "The tab bar sits under the home indicator and is partly untappable; the header hides behind the notch/Dynamic Island.",
+    "correct": "`<meta name=\"viewport\" content=\"... viewport-fit=cover\">` and `padding-bottom: calc(12px + env(safe-area-inset-bottom))` on the bottom bar, `env(safe-area-inset-top)` on the header, plus `-left`/`-right` in landscape.",
+    "detectNotes": "[S] `viewport-fit=cover` present AND every `position: fixed` edge-anchored element references the matching `env(safe-area-inset-*)`. [V] snapshot on a notched device profile. Advisory: matching an element's anchored edge to the right inset is a bundled heuristic, not a single crisp match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-104",
+    "title": "Fixed bottom bar breaks when the keyboard opens",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": "`position: fixed; bottom: 0` for the composer / CTA.",
+    "symptom": "iOS does not resize the layout viewport for the virtual keyboard. The bar stays pinned to the old bottom — floating behind or over the keyboard.",
+    "correct": "Drive the offset from the VisualViewport API (`visualViewport.height`, `offsetTop`, `resize` + `scroll` events), or use `interactive-widget=resizes-content` in the viewport meta where supported.",
+    "detectNotes": "[R] simulate keyboard, assert bar's bounding box stays above the visual viewport bottom. [D] real device is authoritative.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-105",
+    "title": "Rubber-band overscroll reveals the page background",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Dragging past the top/bottom shows the browser/body background behind your \"app\" — the single biggest tell that it's a web page.",
+    "correct": "`overscroll-behavior: none` on the scroll root; give `html, body` the app background; for a true app shell use the fixed-body pattern with a single internal scroller.",
+    "detectNotes": "[S] assert `overscroll-behavior` set on the scroll container.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-106",
+    "title": "Browser pull-to-refresh fights in-app pull-to-refresh",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The browser's native pull-to-refresh gesture fires alongside the app's own in-app pull-to-refresh, so pulling down triggers a full page reload instead of (or on top of) the in-app refresh.",
+    "correct": "`overscroll-behavior-y: contain` on the scroller.",
+    "detectNotes": "[S] scanner. [R] assert a top overscroll gesture does not trigger navigation reload.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-107",
+    "title": "`100vw` causes horizontal scroll",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": "`w-screen` / `width: 100vw`.",
+    "symptom": "`100vw` includes the scrollbar gutter, causing a few px of horizontal scroll, which on mobile becomes a visible sideways drag of the whole app.",
+    "correct": "`width: 100%` / `100dvw`, or `max-width: 100%`.",
+    "detectNotes": "[S] flag `100vw`. [R] assert `document.scrollingElement.scrollWidth <= clientWidth` at 320/360/390/430px.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-108",
+    "title": "Grey tap flash on every touch",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Every touch on an interactive element shows Safari's default grey tap-highlight flash, which reads as unpolished/web-like — and removing it without a real `:active` state removes touch feedback entirely.",
+    "correct": "`-webkit-tap-highlight-color: transparent` on interactive elements, paired with a real `:active` state so feedback isn't lost.",
+    "detectNotes": "[S] scanner; also assert a visible `:active` style exists (removing the flash without replacing it is its own P2).",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-109",
+    "title": "`:hover` styles latch on touch",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "`hover:bg-slate-100` everywhere.",
+    "symptom": "On touch, hover state applies on tap and stays until you tap elsewhere — buttons look permanently selected.",
+    "correct": "Wrap hover-dependent styles in `@media (hover: hover) and (pointer: fine)`.",
+    "detectNotes": "[S] flag hover rules that carry visual state and aren't hover-media-gated. Advisory: must detect Tailwind's `hoverOnlyWhenSupported` config before flagging, or every hover rule false-positives.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-110",
+    "title": "Double-tap zoom + legacy tap delay",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Interactive elements lack `touch-action: manipulation`, so taps can trigger the browser's double-tap-to-zoom gesture. Historically this class of fix was framed around a ~300ms tap delay, but that delay is already gone in modern browsers given a correct viewport meta — the property's real remaining value today is suppressing double-tap zoom.",
+    "correct": "Add `touch-action: manipulation` to interactive elements to suppress double-tap zoom. The 300ms delay itself is no longer an issue in modern browsers with a correct viewport meta; don't cite delay-removal as the justification.",
+    "detectNotes": "[S] scanner on buttons/links/tappables.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-111",
+    "title": "Long-press selects UI text",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "Nothing — or, worse, `user-select: none` on `*`.",
+    "symptom": "Long-pressing a tab label or button selects it and pops the iOS selection bubbles. Feels like a webpage.",
+    "correct": "`user-select: none` on chrome only (nav, tab bar, buttons, headers) and explicitly `user-select: text` on real content (messages, articles, code, addresses). Never global.",
+    "detectNotes": "Reclassified: whether chrome/content is correctly split requires resolving `user-select` across the cascade for every selector, not a single source match. Phase 2 will implement this as a computed-style/DOM sweep: assert content is selectable and chrome is not.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-112",
+    "title": "Long-press pops the iOS callout menu on images/links",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Long-pressing UI imagery or icon links pops iOS's callout menu (Copy/Save/Look Up), which feels like a webpage rather than an app for chrome elements.",
+    "correct": "`-webkit-touch-callout: none` on UI imagery and icon links (keep it on user content where \"save image\" is desirable).",
+    "detectNotes": "[S] scanner.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-113",
+    "title": "`position: sticky` silently dies",
+    "section": "ios-webkit",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": "An unconditional `document.body.style.overflow = 'hidden'` scroll lock on mount.",
+    "symptom": "Sticky needs an unconstrained ancestor scroll context. Locking body overflow kills sticky headers, deadens mobile scroll, and makes dropdowns unreachable — three \"unrelated\" bugs from one line.",
+    "correct": "Gate every scroll lock behind `matchMedia('(min-width: 768px)')` with a resize listener, or use the fixed-body + scroll-restore pattern. Never unconditional.",
+    "detectNotes": "[S] grep `body.style.overflow`, `documentElement.style.overflow`, `scrollLock`, `overflow-hidden` applied to body — assert each is media-gated. This is the single highest-yield static check in the suite.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-114",
+    "title": "Momentum scroll lost in nested scrollers",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Nested scroll containers lose momentum scrolling on iOS. Historically `-webkit-overflow-scrolling: touch` was applied as the fix, but the property has been obsolete since iOS 13 and can itself cause stacking-context bugs — it should not be added on modern iOS.",
+    "correct": "No action needed on modern iOS; avoid adding `-webkit-overflow-scrolling: touch` — it can cause stacking-context bugs. Historical note only. Prefer avoiding nested scroll containers where possible.",
+    "detectNotes": "No detect method documented in the source entry. The honest check is a presence grep flagging `-webkit-overflow-scrolling: touch` as an anti-pattern to remove, not a fix to require.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-115",
+    "title": "No back button in standalone mode",
+    "section": "ios-webkit",
+    "severity": "P0",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Installed iOS PWAs have no browser chrome. If the design assumed the browser back button, users are trapped on any detail route.",
+    "correct": "Every route deeper than a tab root renders an in-app back affordance; verify against `matchMedia('(display-mode: standalone)')`.",
+    "detectNotes": "Reclassified: standalone display-mode is a runtime-only client condition (`matchMedia('(display-mode: standalone)')`), invisible to source. [R] launch in standalone display-mode, walk every route, assert a back control or tab-root status.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-116",
+    "title": "External links eject the user from the PWA",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "On iOS, an out-of-scope link opens Safari and the user loses app state with no way back.",
+    "correct": "Keep in-scope navigation in-app; open genuinely external links with explicit intent (`target=\"_blank\" rel=\"noopener\"`) and warn, or render in-app.",
+    "detectNotes": "[S] enumerate anchors, flag out-of-scope hrefs without explicit external handling. Advisory: marketing links are legitimately external — one of the suite's FP-heaviest checks.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-117",
+    "title": "State lost when the PWA is backgrounded",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "iOS aggressively evicts backgrounded web apps; relaunch is a cold start. In-memory state and unsaved forms vanish.",
+    "correct": "Persist critical state on `visibilitychange` -> `hidden` / `pagehide`, rehydrate on load. Never rely on the process surviving.",
+    "detectNotes": "[R] simulate `pagehide`/reload, assert state restored. [D] real backgrounding.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-118",
+    "title": "Web Push written as if iOS supports it like Chrome",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "iOS supports Web Push only 16.4+, only when installed to the Home Screen, and only after a user-gesture permission request. Agents ship a Chrome-shaped flow that silently no-ops on iOS.",
+    "correct": "Feature-detect (`'PushManager' in window` + standalone check), gate the UI, and give iOS users the Add-to-Home-Screen path first.",
+    "detectNotes": "[S] assert push registration is feature-detected and gesture-bound, not called on load. Advisory: this is an absence-of-guard heuristic, not a single literal match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-119",
+    "title": "Install button that never appears on iOS",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "`beforeinstallprompt` handler and an \"Install app\" button.",
+    "symptom": "`beforeinstallprompt` does not exist in Safari. iOS users see nothing, or a dead button.",
+    "correct": "Two paths — Chromium: capture the deferred prompt, call `.prompt()` inside a user gesture. iOS: detect Safari + not-standalone and show an Add-to-Home-Screen instruction sheet (Share -> Add to Home Screen).",
+    "detectNotes": "[S] check for a distinct iOS fallback code path alongside the Chromium `beforeinstallprompt` handler. [R] in a WebKit context, assert an install affordance still renders and is the iOS variant.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-120",
+    "title": "Apple touch icon missing or transparent",
+    "section": "ios-webkit",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "iOS historically ignores manifest icons for the Home Screen; without `<link rel=\"apple-touch-icon\">` you get a blurry screenshot of the page. Transparent PNGs composite to black.",
+    "correct": "180x180 opaque PNG at `apple-touch-icon`, no alpha, no rounded corners (iOS masks it).",
+    "detectNotes": "[S] tag present. [L] fetch the asset, assert exact 180x180, assert no alpha channel.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-121",
+    "title": "White flash on launch (no iOS splash)",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "No iOS splash screen is configured (no `apple-touch-startup-image` and no consistent `background_color`), so there's a white flash on launch before the app's own UI paints.",
+    "correct": "`apple-touch-startup-image` per device via media queries, or accept the `background_color` splash — but make it match the app background (see P-1003).",
+    "detectNotes": "[S] presence check + `background_color` consistency. [D] real launch confirms the actual flash.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-122",
+    "title": "Status bar style unset",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The `apple-mobile-web-app-status-bar-style` meta tag is left unset, so the status bar doesn't match the app's theme — and if `black-translucent` is used without safe-area handling, content slides under the status bar.",
+    "correct": "`<meta name=\"apple-mobile-web-app-status-bar-style\">` chosen to match the theme (`default` / `black` / `black-translucent`). `black-translucent` requires safe-area handling or content slides under the status bar.",
+    "detectNotes": "[S] tag present; if `black-translucent`, assert P-103 compliance.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-123",
+    "title": "`type=\"number\"` used for phone / OTP / PIN",
+    "section": "ios-webkit",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Spinner arrows, scroll-wheel value changes, silently strips leading zeros, and gives the wrong keyboard.",
+    "correct": "`type=\"tel\"` or `inputmode=\"numeric\" pattern=\"[0-9]*\"`. For OTP add `autocomplete=\"one-time-code\"`.",
+    "detectNotes": "[S] flag `type=\"number\"` on non-quantity fields. Advisory: \"non-quantity\" is a semantic classification of the field, not a literal match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-124",
+    "title": "Native date/time controls styled as if they were divs",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "iOS renders its own wheel picker; custom borders/heights don't apply and the control looks broken.",
+    "correct": "Accept the native iOS wheel-picker chrome for date/time inputs rather than fighting it with custom CSS, or build a fully custom picker component instead of styling the native control.",
+    "detectNotes": "No detect method documented in the source entry. [S] heuristic: flag heavy custom CSS (borders/height/appearance overrides) applied directly to `<input type=date|time|datetime-local>`. [V] snapshot confirms the actual broken rendering on iOS.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-125",
+    "title": "iOS auto-capitalises the email field",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Email/username/code fields get auto-capitalised, auto-corrected, and spell-checked by iOS, corrupting the entered value.",
+    "correct": "`autocapitalize=\"none\" autocorrect=\"off\" spellcheck=\"false\"` on email/username/code fields.",
+    "detectNotes": "[S] scanner keyed on field type. Advisory: matching \"email/username/code\" fields is a semantic classification from name/label/type, not a literal token.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-201",
+    "title": "Tab bar is a normal div in the page flow",
+    "section": "app-shell",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "It scrolls away with the content. The #1 \"this isn't an app\" signal.",
+    "correct": "Fixed/sticky to the bottom, above content in stacking order, safe-area padded (P-103), and rendered once in a persistent shell (P-203).",
+    "detectNotes": "[S] check the tab-bar component's CSS for `position: fixed`/`sticky` as a proxy. [R] scroll to the bottom of every tab route, assert the bar's box is unchanged. Advisory: the static proxy only catches literal CSS, not JS-driven positioning.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-202",
+    "title": "Content hidden behind the tab bar",
+    "section": "app-shell",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The last list item / submit button is permanently unreachable under the bar.",
+    "correct": "Scroll container gets `padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom))`. Derive both from one token so they can't drift.",
+    "detectNotes": "[R] assert the last focusable element in each scroller is fully visible when scrolled to the end.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-203",
+    "title": "No persistent shell — the whole page re-renders per route",
+    "section": "app-shell",
+    "severity": "P1",
+    "detect": [
+      "runtime",
+      "visual"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The tab bar remounts and flashes on every navigation; transitions stutter; scroll position is lost.",
+    "correct": "Shell layout (tab bar + header) mounted above the router outlet, only the outlet swaps.",
+    "detectNotes": "[R] tag the bar node, navigate, assert the same DOM node identity survives.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-204",
+    "title": "No per-tab scroll restoration",
+    "section": "app-shell",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Switching tabs and back dumps you at the top of a long feed. Native apps never do this.",
+    "correct": "Persist scrollTop per tab; restore on re-entry; reset on explicit tab re-tap (native \"tap active tab -> scroll to top\" idiom).",
+    "detectNotes": "[R] scroll, switch away, return, assert scrollTop restored +/-2px.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-205",
+    "title": "Desktop sidebar shipped to mobile",
+    "section": "app-shell",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "An overlay drawer with no backdrop, no close, no focus trap, no ESC, and — often — an unconditional body scroll lock that triggers P-113.",
+    "correct": "Below the breakpoint the sidebar becomes a drawer with: backdrop, focus trap, ESC + backdrop-tap close, `inert` on background content, media-gated scroll lock, and a history entry so Android back closes it (P-208).",
+    "detectNotes": "[S] check for a backdrop element, a focus-trap import, an ESC handler, and a media-gated scroll lock (same technique as P-113) as a bundled structural proxy. [R] open drawer at 390px, assert focus trapped, ESC closes, background `inert`, body lock is media-gated. Advisory: the static proxy bundles several independent heuristics, each with real false-negative risk.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-206",
+    "title": "Header compaction implemented with scroll jank",
+    "section": "app-shell",
+    "severity": "P2",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "A non-passive `scroll` listener reading `scrollTop` and writing styles synchronously.",
+    "symptom": "Layout thrash -> dropped frames on exactly the low-end devices that matter.",
+    "correct": "CSS scroll-driven animations where supported; otherwise a passive listener + `requestAnimationFrame` batching, or an IntersectionObserver sentinel. Never read-then-write per event.",
+    "detectNotes": "[S] flag non-passive scroll listeners and sync style writes inside them. [R] assert no long tasks > 50ms during a scripted scroll. Advisory: identifying a synchronous style write inside a callback is a call-site heuristic, not a literal match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-207",
+    "title": "Modal renders behind the fixed bar / stacking-context trap",
+    "section": "app-shell",
+    "severity": "P0",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A `transform`, `filter`, `backdrop-filter`, `will-change`, or `contain` on any ancestor re-parents `position: fixed` to that ancestor. The modal is then clipped or trapped — and the agent \"fixes\" it with escalating z-index, which cannot work.",
+    "correct": "Portal overlays to `document.body` (or a top-level `#overlay-root`), or use the top layer via `<dialog>` / popover. Audit ancestors for transform-family properties.",
+    "detectNotes": "Reclassified: the offending ancestor can live in any component up the tree, and identifying the actual stacking-context break requires the rendered DOM chain, not a single file's AST. Phase 2 will implement this as a computed-style/DOM sweep: assert overlay bounding box covers the viewport and sits above the tab bar.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-208",
+    "title": "Hardware/gesture back doesn't close the modal",
+    "section": "app-shell",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "On Android, back closes the entire app instead of the sheet. On iOS the edge-swipe navigates away.",
+    "correct": "Push a history entry when opening an overlay; close on `popstate`.",
+    "detectNotes": "[R] open overlay, `history.back()`, assert overlay closed and route unchanged.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-209",
+    "title": "Route transitions break on back navigation",
+    "section": "app-shell",
+    "severity": "P2",
+    "detect": [
+      "runtime",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Route transitions don't account for navigation direction, so going back plays the same forward animation (or breaks entirely), and motion isn't gated behind `prefers-reduced-motion`.",
+    "correct": "Direction-aware transitions driven by navigation type; respect `prefers-reduced-motion` (P-707).",
+    "detectNotes": "No detect method documented in the source entry. [R] navigate forward and back, assert the transition direction matches. [V] visually confirm no broken/backwards transition, and that motion is suppressed under `prefers-reduced-motion`.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-210",
+    "title": "Competing nested scroll containers",
+    "section": "app-shell",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Touch is captured by the wrong scroller; the page feels stuck.",
+    "correct": "One scroll owner per screen; `overscroll-behavior: contain` on any genuinely nested scroller.",
+    "detectNotes": "Reclassified: whether nested `overflow: auto` containers are actually competing scrollers depends on rendered content overflowing at a given viewport, which source alone can't know. [R] walk the rendered DOM for nested containers that are simultaneously scrollable, and flag competing scroll owners.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-301",
+    "title": "Horizontal overflow",
+    "section": "responsive",
+    "severity": "P0",
+    "detect": [
+      "runtime",
+      "visual"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The single most common mobile defect. Sources: `100vw` (P-107), negative margins, unbreakable strings (URLs, tokens, wallet addresses), images without `max-width: 100%`, wide tables (P-305), fixed pixel widths (P-302), `min-width` on flex children (P-303).",
+    "correct": "Fix the contributing sources (P-107, P-302, P-303, P-304, P-305) and eliminate any container whose content exceeds the viewport.",
+    "detectNotes": "Reclassified: `scrollWidth`/`clientWidth` only exist once the page is laid out — this is unavoidably a runtime measurement, not a source-level check. [R] at 320/360/390/430px assert `scrollWidth <= clientWidth`, and on failure report the offending element by walking the DOM for boxes exceeding the viewport. A generic \"page overflows\" finding is not actionable; naming the node is.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-302",
+    "title": "Hardcoded pixel widths",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "`width: 375px`, `w-[420px]`.",
+    "symptom": "Fixed pixel widths on layout containers don't adapt to the viewport, causing overflow or wasted space on other screen sizes.",
+    "correct": "Fluid widths + `max-width`.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag literal px widths / Tailwind arbitrary `w-[Npx]` values. Advisory: small fixed widths (icons, avatars) are legitimate; only large/layout-scale widths are real findings, which needs a size threshold.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-303",
+    "title": "Flex/grid children won't shrink",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Text refuses to truncate and blows out the row, because flex items default to `min-width: auto`.",
+    "correct": "`min-width: 0` (or `overflow: hidden`) on the shrinking child; `min-height: 0` for column axes.",
+    "detectNotes": "Reclassified: whether a truncation class's flex-ancestor chain actually lacks `min-w-0` requires walking the resolved DOM/cascade across components, not a single file's AST. Phase 2 will implement this as a computed-style/DOM sweep.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-304",
+    "title": "Long unbreakable strings overflow",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "User-generated unbreakable strings (URLs, tokens, wallet addresses) blow out their container's width.",
+    "correct": "`overflow-wrap: anywhere` / `word-break: break-word` on user-content containers.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag user-content containers lacking `overflow-wrap`/`word-break`. [R] confirm actual overflow with representative long content. Advisory: identifying \"user-content containers\" is a semantic judgment, not a literal match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-305",
+    "title": "Tables dumped raw",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A wide `<table>` with no horizontal scroll wrapper forces the whole page to scroll sideways.",
+    "correct": "Wrap in an `overflow-x: auto` container (never let the page scroll sideways), or switch to a card layout below the breakpoint.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `<table>` elements without an `overflow-x: auto` ancestor wrapper. [R] confirm the page itself doesn't scroll sideways. Advisory: a card-layout alternative can't be verified by structural scan alone.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-306",
+    "title": "Only tested at one width",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "visual"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Agents design at ~390px and never check 320px (SE / older Androids) or 430px (Pro Max).",
+    "correct": "The suite's canonical width set — 320, 360, 390, 430, 768, 1024 — plus landscape.",
+    "detectNotes": "No detect method documented in the source entry. [V] check test/snapshot configuration covers the canonical width set rather than a single viewport.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-307",
+    "title": "Landscape ignored",
+    "section": "responsive",
+    "severity": "P2",
+    "detect": [
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The tab bar + header eat most of a short landscape viewport; modals become unscrollable.",
+    "correct": "Design and test the shell chrome and modals explicitly at landscape heights, not just portrait.",
+    "detectNotes": "No detect method documented in the source entry. [V] snapshot at landscape widths/short heights; judging \"eats most of the viewport\" is a visual assessment.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-308",
+    "title": "Touch targets too small",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Interactive elements are smaller than the platform minimum tap target, most often icon-only buttons.",
+    "correct": "≥ 44x44 CSS px (Apple HIG) / 48dp (Material), including padding.",
+    "detectNotes": "Reclassified: the effective tap-target box depends on computed padding/box-sizing, which requires the rendered layout, not source alone. [R] measure every interactive element's box; report each violation with its selector.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-309",
+    "title": "Images cause layout shift",
+    "section": "responsive",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Images without dimensions reflow the page as they load, causing a CLS spike.",
+    "correct": "Intrinsic `width`/`height` attributes or `aspect-ratio`; `loading=\"lazy\"` below the fold, `fetchpriority=\"high\"` for the LCP image.",
+    "detectNotes": "[S] `<img>` without dimensions. [R] CLS budget.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-310",
+    "title": "Nothing scales with user font-size",
+    "section": "responsive",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Everything in `px` ignores the user's accessibility text-size setting.",
+    "correct": "`rem` for type and spacing that should scale; keep `text-size-adjust` sane.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `px` used for type/spacing that should scale with the user's font-size preference.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-401",
+    "title": "No manifest, or not linked",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The app has no `<link rel=\"manifest\">`, or it points somewhere unresolvable, so the browser has nothing to install from.",
+    "correct": "Add a valid manifest and link it: `<link rel=\"manifest\" href=\"/manifest.webmanifest\">`.",
+    "detectNotes": "[S] `<link rel=\"manifest\">` present and resolvable.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-402",
+    "title": "`start_url` wrong",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Launching the installed app lands on a 404 — classic when the app is served from a subpath, or when the agent writes `/` for an app mounted at `/app/`.",
+    "correct": "Absolute, in-scope, verified to return 200. Add a source param (`?source=pwa`) for analytics.",
+    "detectNotes": "[L] fetch `start_url`, assert 200 and within `scope`.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-403",
+    "title": "`scope` wrong or missing",
+    "section": "manifest",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "In-app links fall out of scope and open in a browser tab (see P-116).",
+    "correct": "Set `scope` to the app's real root path and keep all in-app navigation within it.",
+    "detectNotes": "No detect method documented in the source entry. [L] assert `scope` is present and matches the app's actual deployed root.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-404",
+    "title": "Missing 192 / 512 icons",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Chromium refuses to treat the app as installable.",
+    "correct": "Provide both 192x192 and 512x512 icons in the manifest, fetchable at their declared URLs.",
+    "detectNotes": "[L] both sizes present, fetchable, and actually those pixel dimensions — see P-406.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-405",
+    "title": "No `maskable` icon → logo cropped into a circle",
+    "section": "manifest",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "The same PNG listed for both `\"purpose\": \"any\"` and `\"maskable\"`.",
+    "symptom": "Android applies a mask; a full-bleed logo loses its edges — usually decapitating the wordmark.",
+    "correct": "A separate maskable asset with the logo inside the 40% safe zone (centred circle of radius 40% of the icon), padded background to the edges.",
+    "detectNotes": "[L] a maskable entry exists and is a different file from `any`; analyse pixel content outside the safe zone.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-406",
+    "title": "Declared icon size ≠ actual file size",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The manifest says `512x512`, the file is 192 — install prompts vanish with no error. Agents copy manifest boilerplate without generating the assets.",
+    "correct": "Regenerate icon assets to match every declared `sizes` entry exactly.",
+    "detectNotes": "[L] decode each icon, assert the real dimensions match the `sizes` string. High-yield, trivially automatable, almost never checked.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-407",
+    "title": "Transparent icon → black square on iOS",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A transparent apple-touch-icon or maskable icon composites to solid black on iOS.",
+    "correct": "Ship opaque PNGs with no alpha channel for the apple-touch-icon and maskable icon.",
+    "detectNotes": "[L] assert no alpha in the apple-touch-icon and in the maskable icon.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-408",
+    "title": "`theme_color` / `<meta name=\"theme-color\">` mismatch or dark-mode-blind",
+    "section": "manifest",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "White status/URL bar strip above a dark app.",
+    "correct": "Manifest `theme_color` and `<meta name=\"theme-color\">` with `media=\"(prefers-color-scheme: dark|light)\"` variants, all agreeing with the actual painted background.",
+    "detectNotes": "[S] cross-check the three sources (manifest `theme_color`, meta tag light/dark variants) for internal agreement.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-409",
+    "title": "`background_color` mismatched → coloured flash on launch",
+    "section": "manifest",
+    "severity": "P2",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The manifest's `background_color` doesn't match the app's true initial background, producing a visible colour flash on launch.",
+    "correct": "Set `background_color` to equal the app's true initial background, per colour scheme.",
+    "detectNotes": "No detect method documented in the source entry. [L] compare manifest `background_color` against the rendered initial background. Advisory: colour-match comparison needs a tolerance judgment.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-410",
+    "title": "Manifest `id` missing",
+    "section": "manifest",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Without a stable `id`, changing `start_url` makes the browser treat it as a different app — installs duplicate instead of updating.",
+    "correct": "Set a stable manifest `id` that never changes across deploys.",
+    "detectNotes": "No detect method documented in the source entry. [L] assert manifest `id` is present.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-411",
+    "title": "`short_name` too long",
+    "section": "manifest",
+    "severity": "P2",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`short_name` is ellipsised under the home-screen icon.",
+    "correct": "Keep `short_name` <= 12 chars or it's ellipsised under the home-screen icon.",
+    "detectNotes": "No detect method documented in the source entry. [L] assert `short_name` length <= 12 chars.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-412",
+    "title": "No `screenshots` / `form_factor`",
+    "section": "manifest",
+    "severity": "P2",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Android shows the minimal install chip instead of the rich install dialog.",
+    "correct": "Provide `screenshots` (with `form_factor`) in the manifest for the rich install UI.",
+    "detectNotes": "No detect method documented in the source entry. [L] assert `screenshots` array is present with `form_factor` set.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-413",
+    "title": "Manifest unreachable — MIME, auth, or CDN",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Served as `text/html`, or behind auth without `crossorigin=\"use-credentials\"` → install silently unavailable.",
+    "correct": "Serve the manifest as `application/manifest+json`, unauthenticated (or with `crossorigin=\"use-credentials\"` and matching CORS).",
+    "detectNotes": "[L] fetch as an unauthenticated client, assert `application/manifest+json` and valid JSON.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-414",
+    "title": "`orientation` locked wrongly",
+    "section": "manifest",
+    "severity": "P2",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The manifest locks `orientation` in a way that doesn't match how the app is actually meant to be used.",
+    "correct": "Only lock `orientation` when the app genuinely requires a single orientation; otherwise leave it unset.",
+    "detectNotes": "No detect method documented in the source entry. [L] flag a locked `orientation`; whether it's \"wrong\" needs a judgment call against the app's actual UI.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-415",
+    "title": "Not served over HTTPS",
+    "section": "manifest",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "No secure context → no service worker, no install, no push.",
+    "correct": "Serve the app over HTTPS (localhost is exempt for development).",
+    "detectNotes": "No detect method documented in the source entry. [L] assert the deployed origin is HTTPS.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-416",
+    "title": "`prompt()` called outside a user gesture",
+    "section": "manifest",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The deferred install prompt is discarded by the browser and the button does nothing.",
+    "correct": "Call the deferred install prompt's `.prompt()` synchronously inside a user-gesture handler (e.g. a click listener), never on a timer or on load.",
+    "detectNotes": "No detect method documented in the source entry. [S] check the call site of `.prompt()` is inside a gesture-bound event handler. Advisory: call-site gesture-boundedness is a control-flow heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-417",
+    "title": "Already-installed state not detected",
+    "section": "manifest",
+    "severity": "P2",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Install UI (button, banner) keeps showing even after the user has already installed the app.",
+    "correct": "Hide install UI when `matchMedia('(display-mode: standalone)')` matches or after `appinstalled`.",
+    "detectNotes": "No detect method documented in the source entry. [S] check for a `matchMedia('(display-mode: standalone)')` or `appinstalled` guard around install UI. [R] confirm install UI hides once standalone. Advisory: presence of the guard doesn't guarantee it's wired correctly.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-501",
+    "title": "No service worker at all",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A manifest alone is not a PWA. Common when the agent \"adds PWA support\" in one pass.",
+    "correct": "Register a service worker that actually controls the origin.",
+    "detectNotes": "No detect method documented in the source entry. [L] assert a service worker is registered and active for the origin.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-502",
+    "title": "Cache-first on HTML/navigation",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The catastrophic one. Users are pinned to the old app forever; your deploys are invisible; you cannot fix it remotely because the fix itself is behind the cache.",
+    "correct": "Network-first (or stale-while-revalidate with a fast timeout) for navigations; cache-first only for content-hashed immutable assets.",
+    "detectNotes": "[S] classify the fetch handler's navigation strategy — reject cache-first for `request.mode === 'navigate'`. [R] deploy-B simulation (P-512). Advisory: classifying an arbitrary fetch handler's strategy is a control-flow heuristic, not a literal match.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-503",
+    "title": "No update flow — new SW waits forever",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The new worker sits in `waiting` until every tab closes. On an installed PWA that can be days.",
+    "correct": "Detect `updatefound` -> `installed` with an existing controller -> surface a non-blocking \"Update available — reload\", then `skipWaiting` + `clients.claim` on user confirmation.",
+    "detectNotes": "No detect method documented in the source entry. [S] check for an `updatefound`/`installed`-with-existing-controller handler paired with a user-confirmed reload. [R] confirm the update banner appears and reload is user-gated. Advisory: confirming correct ordering needs flow analysis.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-504",
+    "title": "`skipWaiting()` fired unconditionally",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The inverse mistake, and agents love it as a \"fix\" for P-503. Assets swap under a live tab → the running bundle requests chunks that no longer exist → white screen mid-session.",
+    "correct": "Only after user-confirmed reload, or paired with a controlled reload on `controllerchange`.",
+    "detectNotes": "[S] `skipWaiting` at install-time with no reload coordination. Advisory: proving \"no reload coordination\" is an absence-of-guard heuristic across the whole SW file.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-505",
+    "title": "Lazy chunk 404s after deploy",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The loaded shell references `chunk-A1B2.js`; the new deploy deleted it. Any lazy route now white-screens. This is the most common real-world PWA outage and agents essentially never handle it.",
+    "correct": "A global dynamic-import error handler that force-reloads once (guarded against reload loops), plus a retention window for old chunks on the origin.",
+    "detectNotes": "[S] assert a chunk-error boundary exists. [R] deploy-B simulation with the old chunk removed. Advisory: presence of a boundary doesn't confirm it reloads correctly.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-506",
+    "title": "POST / mutations cached",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The fetch handler caches or serves cached responses for non-GET requests, so mutation results can be replayed stale.",
+    "correct": "Never cache non-GET; never serve API mutations from cache.",
+    "detectNotes": "No detect method documented in the source entry. [S] check the fetch handler branches on `request.method === 'GET'` before any cache read/write. Advisory: tracing method-guards across a handler's control flow is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-507",
+    "title": "Opaque cross-origin responses cached",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Opaque responses have unknown status (a 404 caches happily) and are padded — they blow the quota.",
+    "correct": "Don't blanket-cache cross-origin `no-cors` requests; check `response.type`/status where possible, or scope caching to same-origin.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag cache writes of cross-origin `no-cors` fetches without a type/status check. Advisory: tracing the response object's provenance is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-508",
+    "title": "SW scope too narrow",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`/static/sw.js` can only control `/static/`. The app is uncontrolled and nothing works.",
+    "correct": "Serve from the origin root, or set `Service-Worker-Allowed`.",
+    "detectNotes": "[S] check the SW file's serve path / registration scope option / `Service-Worker-Allowed` header against the app's real root.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-509",
+    "title": "No offline fallback",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A failed navigation while offline shows the browser's generic error page instead of the app's own offline UI.",
+    "correct": "A precached offline document for failed navigations; enable `navigationPreload` to avoid the SW boot penalty.",
+    "detectNotes": "[R] go offline, navigate, assert a real offline page rather than the browser error.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-510",
+    "title": "Caches never versioned or purged",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Old cache entries from previous deploys accumulate forever and can shadow the current build.",
+    "correct": "Versioned cache names + delete non-current caches on `activate`.",
+    "detectNotes": "No detect method documented in the source entry. [S] check cache names are build/version-derived and the `activate` handler deletes non-current cache keys. Advisory: bundled two-part heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-511",
+    "title": "Quota exceeded unhandled",
+    "section": "service-worker",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The service worker / cache-storage layer never handles a `QuotaExceededError`, so once device storage fills up, cache writes silently fail (or throw uncaught) and the app degrades with no diagnostic.",
+    "correct": "Catch storage-quota errors from Cache/IndexedDB writes, evict least-valuable cached data, and surface a diagnostic instead of failing silently.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag cache/IndexedDB write call sites lacking a catch/quota-error handling path. Advisory: absence-based heuristic across arbitrary code shapes.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-512",
+    "title": "The update path is never tested",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Every SW suite tests a first install. Nearly none test deploy A → deploy B on an existing client, which is where P-502/503/504/505 all live.",
+    "correct": "The suite must ship a two-build harness: serve build A, install, then swap the origin to build B and assert the client converges to B (with old chunks deleted).",
+    "detectNotes": "[R] this is the single most valuable runtime test in the suite.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-513",
+    "title": "SW active in development",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The dev sees stale output and concludes the AI broke something; hours vanish.",
+    "correct": "Register only in production, and ship an unregister-and-clear escape hatch.",
+    "detectNotes": "No detect method documented in the source entry. [S] check SW registration is gated behind a production-only condition (e.g. `NODE_ENV === 'production'`). Advisory: env-guard call-site heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-514",
+    "title": "`sw.js` / manifest served with long cache TTL",
+    "section": "service-worker",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The CDN pins the worker itself. Users can never receive the fix.",
+    "correct": "`Cache-Control: no-cache` on `sw.js` and the manifest; long immutable TTLs only on hashed assets.",
+    "detectNotes": "[S] response-header assertion against the deployed origin, or against the headers config file (e.g. `vercel.json`, `netlify.toml`, `_headers`, nginx/CDN config) when checked at build time.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-515",
+    "title": "Auth headers / credentials dropped by the fetch handler",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A naive `fetch(event.request)` re-issue loses credentials mode → random 401s only for installed users.",
+    "correct": "Re-issue requests with their original `credentials` mode preserved (or explicit `credentials: 'include'`/`'same-origin'` as appropriate).",
+    "detectNotes": "No detect method documented in the source entry. [S] check the fetch handler preserves `request.credentials` when re-issuing. [R] confirm authenticated requests still succeed through the SW. Advisory: credentials-handling tracing is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-516",
+    "title": "Range requests broken (audio/video)",
+    "section": "service-worker",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Media won't seek, or won't play at all on Safari, when the SW returns a non-range response.",
+    "correct": "Forward `Range` headers and return a proper 206 partial response from the fetch handler for media requests.",
+    "detectNotes": "No detect method documented in the source entry. [S] check the fetch handler forwards `Range` headers for media requests rather than serving a full cached response. Advisory: range-handling heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-517",
+    "title": "`localStorage` used for offline data",
+    "section": "service-worker",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "~5MB cap, synchronous (jank on the main thread). iOS ITP evicts unused storage after 7 days of non-use — but an actively used, installed home-screen app counts days-of-use and is effectively exempt from that eviction; the real risk is specifically infrequently-opened installed apps and non-installed Safari tabs.",
+    "correct": "IndexedDB for anything meaningful; treat all client storage as evictable for infrequently-used installs and browser tabs; request persistence where it matters.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `localStorage`/`sessionStorage` used to persist meaningful offline app data (as opposed to trivial UI preferences). Advisory: distinguishing \"meaningful data\" from trivial flags is a semantic classification.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-518",
+    "title": "`navigator.onLine` trusted",
+    "section": "service-worker",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "It reports \"online\" on captive portals and any LAN-only connection.",
+    "correct": "Confirm with a real request before declaring connectivity.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `navigator.onLine` used directly to gate logic without a nearby confirming network request. Advisory: weak absence-based heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-519",
+    "title": "Background/periodic sync assumed universal",
+    "section": "service-worker",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Chromium-only. Must be feature-detected with a foreground fallback.",
+    "correct": "Feature-detect (`'sync' in registration` / `'periodicSync' in registration`) and provide a foreground fallback.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag Background/Periodic Sync API usage without a feature-detect guard. Advisory: absence-of-guard heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-520",
+    "title": "Auth cookie shape changed; existing clients wedge",
+    "section": "version-skew",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": "Renames or reshapes the session cookie in a new release.",
+    "symptom": "Existing users still send the old cookie. The app half-reads it — infinite redirect loop, or \"logged in\" with no session. Reproduces for nobody testing with a clean profile.",
+    "correct": "Version the cookie name on any breaking change and explicitly clear the old one; or read both shapes for one release. A deliberate migration, never an implicit one.",
+    "detectNotes": "[S] diff auth-cookie names/shapes between builds A and B; flag a change with no clear-old path. [R] harness — authenticate on A, deploy B, assert the client reaches a coherent state: still authed, or cleanly logged out. Never wedged. Advisory: \"no clear-old path\" is a bundled code-presence heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-521",
+    "title": "No build/version stamp on the client",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The app cannot know it is stale, you cannot answer \"which build is this user on?\", and every other check in this section has nothing to key off.",
+    "correct": "Embed a build ID at build time, expose it (meta tag or global), and send it with API requests.",
+    "detectNotes": "[S] a build stamp exists and differs between A and B.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-522",
+    "title": "API contract skew — old shell, new API",
+    "section": "version-skew",
+    "severity": "P0",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A cached build-A shell calls build-B's API. Silent 4xx, or a shape mismatch rendered as a blank screen with no error.",
+    "correct": "Version the API, or have the server advertise a minimum supported client so the app can force an update.",
+    "detectNotes": "[R] harness — run A's shell against B's API; assert graceful handling (forced update, or a compatible response). A silent blank is a failure. Advisory: classifying \"graceful\" vs \"silent blank\" is a judgment call.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-523",
+    "title": "Cached data survives logout / account switch",
+    "section": "version-skew",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "SW cache, IndexedDB, or localStorage retains user A's data; user B signs in on the same device and sees it. This is a privacy incident, not a glitch — and shared devices are the norm in plenty of markets.",
+    "correct": "Purge all user-scoped caches and storage on logout and on identity change. Where retention is deliberate, key it by user.",
+    "detectNotes": "[S] assert the logout path clears caches + IDB. [R] sign in as A, sign out, sign in as B, assert no A-scoped data is reachable. Advisory: confirming complete coverage of every user-scoped store is a completeness heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-524",
+    "title": "Caches not keyed by build ID",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A new deploy reuses the old cache namespace, so stale entries survive the very update meant to replace them.",
+    "correct": "Cache names derive from the build ID; `activate` deletes every non-current cache.",
+    "detectNotes": "[S] cache names are build-derived and `activate` purges others. Advisory: bundled two-part heuristic, same pattern as P-510.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-525",
+    "title": "Client storage schema migration missing",
+    "section": "version-skew",
+    "severity": "P0",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Build B expects a new shape; build A's persisted state crashes it during boot — `undefined` access, or `JSON.parse` of a changed shape. White screen for existing users only. Invisible in dev, invisible to any fresh-profile test, and it looks like a total outage to the affected user.",
+    "correct": "Version the persisted schema; migrate or discard on read; wrap hydration in a failure path that falls back to clean state rather than dying.",
+    "detectNotes": "[S] persisted reads are version-checked and failure-tolerant. [R] harness — seed A's storage, load B, assert boot succeeds. Advisory: guard-presence heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-526",
+    "title": "Authenticated responses cached by the service worker",
+    "section": "version-skew",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "A private response is written to the cache and later served to a different or logged-out user.",
+    "correct": "Never cache responses to credentialed requests unless keyed by identity and purged on logout.",
+    "detectNotes": "[S] flag cache writes for requests carrying credentials. Advisory: tracing whether a cached request carried credentials requires data-flow analysis between request creation and the cache write.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-527",
+    "title": "No hard-reset escape hatch",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "When a user is wedged, there is no supported recovery. Support's only advice becomes \"reinstall\" — and on iOS that means deleting the home-screen app and losing everything local.",
+    "correct": "Ship a reachable reset route that unregisters service workers, deletes all caches, clears storage, and reloads. The goal is that support can fix it in one sentence.",
+    "detectNotes": "[S] such a route exists. Advisory: recognizing an ad-hoc combination of unregister/clear-cache/clear-storage/reload calls is a multi-API-call pattern match, not a single token.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-528",
+    "title": "Service worker and app shell from different builds",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "SW from A, shell from B — the precache manifest references assets the shell never requests, and vice versa.",
+    "correct": "The SW carries its build ID and declines to serve a mismatched shell; converge on one build.",
+    "detectNotes": "[R] harness assertion.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-529",
+    "title": "Safari caps client-set cookies at 7 days",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Cookies set via `document.cookie` in Safari are capped at 7 days by ITP regardless of stated `max-age` — users are silently signed out weekly. Installed PWAs make it worse, because a home-screen app is expected to stay signed in.",
+    "correct": "Set auth cookies server-side via `Set-Cookie`; never rely on long-lived client-set cookies for session.",
+    "detectNotes": "[S] flag long-`max-age` auth cookies assigned through `document.cookie`.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-530",
+    "title": "Cookie attributes wrong for standalone launch",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`SameSite` / `Secure` / partitioning mismatches break OAuth returns and cross-context launches from the home screen — works in the browser tab, fails in the installed app.",
+    "correct": "`Secure`, a deliberate `SameSite`, and test the real install → sign-in → relaunch path.",
+    "detectNotes": "No detect method documented in the source entry. [S] check server-set auth cookie attributes (`Secure`, `SameSite`, partitioning) for standalone-launch compatibility. Advisory: correctness depends on the app's actual OAuth/launch flow, a semantic judgment.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-531",
+    "title": "Breaking update never forced",
+    "section": "version-skew",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "P-503's polite \"update available\" banner is the wrong answer when the old client is incompatible — it lets users keep operating a build that cannot work.",
+    "correct": "Distinguish optional from mandatory updates; a server-signalled minimum version triggers a forced reload.",
+    "detectNotes": "[S] check for a distinct mandatory-update code path (minimum-version check + forced reload) separate from the optional-update banner (P-503). [R] harness — mark B as breaking, assert A's client force-updates rather than lingering. Advisory: distinguishing the mandatory path from the optional one is a branch heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-601",
+    "title": "No code splitting",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The entire app bundles into one chunk; every route pays the download/parse cost of the whole app on first load.",
+    "correct": "Split routes/heavy components into lazy-loaded chunks (dynamic `import()` / `React.lazy`) so first load ships only what's needed.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag route-level components with no dynamic `import()`/`lazy()` usage. [L] flags unused/oversized JS. Advisory: absence of the pattern doesn't strictly prove no splitting exists elsewhere.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-602",
+    "title": "Font FOIT / no preload",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Custom web fonts load without `font-display: swap` or a `<link rel=preload>`, so text is invisible (FOIT) until the font arrives — worse on cellular.",
+    "correct": "Set `font-display: swap` on `@font-face` and preload the primary font file.",
+    "detectNotes": "No detect method documented in the source entry. [S] grep `@font-face` declarations for `font-display: swap` and check for a matching `<link rel=preload>` font tag.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-603",
+    "title": "Whole icon library imported",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": "`import * from 'lucide-react'` style barrel imports.",
+    "symptom": "Importing the whole icon library ships thousands of unused icons in the bundle, bloating first-load JS for the six icons actually used.",
+    "correct": "Import icons individually (or use a tree-shakeable subpath) so only used icons ship.",
+    "detectNotes": "No detect method documented in the source entry. [S] AST scan for wildcard/barrel imports from known icon libraries.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-604",
+    "title": "Unoptimised images",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "No `srcset`/`sizes`, no AVIF/WebP, no lazy loading, LCP image not prioritised.",
+    "correct": "Add responsive `srcset`/`sizes`, serve AVIF/WebP, lazy-load below-the-fold images, and set `fetchpriority=high` on the LCP image.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan of `<img>`/`<picture>` markup for missing `srcset`/`sizes`/`loading` attributes. [L] audits image optimisation and LCP. Advisory: identifying which image is the LCP candidate from source alone is a heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-605",
+    "title": "Animating layout properties",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`width`/`height`/`top`/`left`/`margin` instead of `transform`/`opacity` → guaranteed jank on mid-range Android.",
+    "correct": "Animate `transform` and `opacity` only; avoid animating layout properties.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan CSS `transition`/`animation`/`@keyframes` declarations for layout properties instead of `transform`/`opacity`.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-606",
+    "title": "`will-change` sprayed everywhere",
+    "section": "performance",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Each one is a permanent compositor layer; mobile GPU memory is not free.",
+    "correct": "Apply `will-change` narrowly, only immediately before an animation starts, and remove it after; never spray it globally.",
+    "detectNotes": "No detect method documented in the source entry. [S] grep `will-change` usage breadth (broad selectors / many rules). Advisory: judging \"sprayed\" vs a few legitimate uses needs a threshold.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-607",
+    "title": "Long lists unvirtualised",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "1,000 rows of DOM freezes low-end devices.",
+    "correct": "Virtualise, or at minimum `content-visibility: auto`.",
+    "detectNotes": "No detect method documented in the source entry. [R] render a long list and assert DOM node count / frame time stays bounded rather than scaling linearly with list length. Advisory: needs a size threshold.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-608",
+    "title": "Heavy hydration / everything a client component",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Nearly every component is marked a client component / hydrated eagerly, so the whole page pays hydration cost even where server rendering or partial hydration would do.",
+    "correct": "Keep components server-rendered/static by default; opt into client hydration only where interactivity is actually needed.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan for pervasive `'use client'` directives / client-component wrapping relative to actual interactive surface. Advisory: judging \"heavy\"/\"everything\" needs a proportion heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-609",
+    "title": "Third-party scripts render-blocking",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Third-party scripts (analytics, chat widgets, ads) load synchronously in `<head>` and block rendering.",
+    "correct": "Load third-party scripts with `async`/`defer`, or after first paint via a script loader.",
+    "detectNotes": "No detect method documented in the source entry. [L] flags render-blocking resources and third-party script impact.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-610",
+    "title": "Install prompt / cookie banner injected above content",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Pushes the page down after paint — a self-inflicted CLS spike from the PWA layer itself.",
+    "correct": "Reserve space for the banner up front (skeleton/placeholder) or render it as an overlay that doesn't reflow content.",
+    "detectNotes": "No detect method documented in the source entry. [R] measure CLS around banner mount and assert it stays within budget rather than spiking on injection.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-611",
+    "title": "Perf budget measured on desktop",
+    "section": "performance",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Performance budgets and audits are measured on a fast desktop machine, hiding the jank and load times real mobile users on mid-range Android actually experience.",
+    "correct": "Audit with mobile CPU throttling (4–6x) and a throttled network, not on your M-series laptop.",
+    "detectNotes": "No detect method documented in the source entry. [L] check the Lighthouse run configuration applies mobile CPU/network throttling.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-701",
+    "title": "Pinch-zoom disabled",
+    "section": "accessibility",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": "`user-scalable=no, maximum-scale=1` — very often as the \"fix\" for P-101.",
+    "symptom": "WCAG 1.4.4 failure. Low-vision users cannot zoom. iOS 10+ ignores it in Safari anyway, so it fails and doesn't work.",
+    "correct": "Fix input zoom with 16px fonts (P-101). Leave pinch zoom enabled. Blocking pinch zoom is a WCAG 1.4.4 failure the suite must never emit — this is a FAIL, never a suggestion.",
+    "detectNotes": "[S] grep the viewport meta content for `user-scalable=no` / `maximum-scale=1` (or <1). Crisp presence check — the suite fails this on sight.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-702",
+    "title": "`user-select: none` applied globally",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Breaks copy for real content and degrades assistive tooling. See P-111 — chrome only.",
+    "correct": "Scope `user-select: none` to chrome only (nav, tab bar, buttons, headers); leave real content selectable.",
+    "detectNotes": "Reclassified: same as P-111 — whether chrome/content is correctly split requires resolving `user-select` across the cascade, not a single source match. Phase 2 will implement this as a computed-style/DOM sweep.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-703",
+    "title": "Icon-only buttons with no accessible name",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The tab bar is the usual offender — a screen-reader user hears nothing meaningful for the control.",
+    "correct": "`aria-label` or visually-hidden text.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag icon-only buttons (no text child) lacking `aria-label`/`aria-labelledby`/visually-hidden text. [R] confirm the accessible name via the accessibility tree.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-704",
+    "title": "`<div onClick>` instead of a button",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "No keyboard, no role, no focus, no Enter/Space.",
+    "correct": "Use a real `<button>`, or add `role=\"button\"`, `tabIndex`, and Enter/Space key handling.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `<div onClick>`/`<span onClick>` lacking `role`, `tabIndex`, and a key handler. [R] confirm keyboard activation works.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-705",
+    "title": "`outline: none` with no focus replacement",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Removing focus styling \"because it looked bad on mobile\" breaks all keyboard users.",
+    "correct": "`:focus-visible` ring.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `outline: none`/`outline: 0` rules with no paired `:focus-visible` style elsewhere in scope. Advisory: correlating the removal with a replacement elsewhere in the stylesheet is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-706",
+    "title": "Focus not trapped in overlays, not restored on close",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Focus escapes to the background page behind the modal.",
+    "correct": "Trap focus inside the overlay while open; restore focus to the triggering element on close.",
+    "detectNotes": "[R] open overlay, tab through, assert focus stays inside; close, assert focus returns to the trigger.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-707",
+    "title": "`prefers-reduced-motion` ignored",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Page transitions and parallax cause real vestibular harm.",
+    "correct": "Gate non-essential motion behind `@media (prefers-reduced-motion: no-preference)`.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag animation/transition declarations with no `prefers-reduced-motion` override anywhere in scope. Advisory: correlating declarations across rules is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-708",
+    "title": "SPA route changes unannounced",
+    "section": "accessibility",
+    "severity": "P2",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Screen-reader users get no signal that the view changed.",
+    "correct": "Live region + focus management on navigation.",
+    "detectNotes": "No detect method documented in the source entry. [R] navigate, assert a live-region announcement fires or focus moves to the new view's heading.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-709",
+    "title": "Contrast failures",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Agents reach for tasteful mid-greys that fail 4.5:1 — especially placeholder text and secondary labels.",
+    "correct": "Ensure text and background colours meet WCAG contrast thresholds (4.5:1 normal text, 3:1 large text).",
+    "detectNotes": "Reclassified: contrast ratio needs the resolved computed color and background (cascade, opacity, overlays), not a source-level value. Phase 2 will implement this as a computed-style sweep. Confidence advisory: contrast ratio thresholds are the brief's own paradigm example of judgment-requiring detection.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-710",
+    "title": "Inputs without labels; errors not associated",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Placeholder-as-label is not a label. Errors need `aria-describedby` + `aria-invalid`.",
+    "correct": "Every input gets a real `<label>` (or `aria-label`); error messages wire up via `aria-describedby` + `aria-invalid`.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag `<input>` without an associated `<label>`/`aria-label`, and error-message elements not wired via `aria-describedby`/`aria-invalid`. Advisory: bundled multi-condition structural check.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-711",
+    "title": "Background content not `inert` behind a modal",
+    "section": "accessibility",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Screen-reader and keyboard users can still reach content behind an open modal.",
+    "correct": "Apply `inert` (or `aria-hidden` + focus containment) to background content while a modal is open.",
+    "detectNotes": "No detect method documented in the source entry. [R] open a modal, assert background content is `inert`/unreachable by tab or screen-reader traversal.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-712",
+    "title": "Heading order / landmarks broken",
+    "section": "accessibility",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Heading levels skip or land in the wrong order, and landmark roles (`main`, `nav`, `header`) are missing or duplicated, confusing screen-reader navigation.",
+    "correct": "Keep heading levels sequential (no skipped levels) and use one set of well-formed landmark regions per page.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan rendered heading structure for skipped levels and landmark roles for duplication/absence. Advisory: component-based apps often compose headings per-component in ways that are legitimately non-linear at the source level.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-801",
+    "title": "Physical CSS properties instead of logical",
+    "section": "rtl",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": "`margin-left`, `padding-right`, `left`, `text-align: left`, `border-l`.",
+    "symptom": "Physical-direction CSS properties don't flip in RTL, so layout, spacing, and text alignment stay LTR-shaped inside an Arabic UI.",
+    "correct": "`margin-inline-start`, `padding-inline-end`, `inset-inline-start`, `text-align: start`. In Tailwind: `ms-*`/`me-*`/`ps-*`/`pe-*`, not `ml-*`/`mr-*`.",
+    "detectNotes": "[S] flag physical properties in any RTL-capable surface — mechanical and very high yield.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-802",
+    "title": "Directional icons not mirrored",
+    "section": "rtl",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The back chevron points the wrong way in RTL.",
+    "correct": "Mirror direction-bearing glyphs; never mirror logos, media controls, or clocks.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag known directional icon names without an RTL mirror transform. [V] snapshot in RTL confirms visually. Advisory: no static analysis knows which SVGs are direction-bearing — one of the suite's FP-heaviest checks.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-803",
+    "title": "`dir` / `lang` not set",
+    "section": "rtl",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Breaks the bidi algorithm and screen-reader pronunciation.",
+    "correct": "Set `dir` and `lang` on `<html>` (and on any locale-scoped subtree) to match the active locale.",
+    "detectNotes": "No detect method documented in the source entry. [S] assert `<html>` has `dir` and `lang` attributes matching the active locale.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-804",
+    "title": "Mixed LTR inside RTL scrambles",
+    "section": "rtl",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Phone numbers, `+970`, URLs, latin brand names inside Arabic text reorder wrongly.",
+    "correct": "`<bdi>` / `unicode-bidi: isolate` around embedded LTR runs.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag likely embedded LTR runs (phone/URL/latin-brand patterns) inside RTL text not wrapped in `<bdi>`/`unicode-bidi: isolate`. [V] snapshot confirms visual reordering. Advisory: content-pattern recognition is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-805",
+    "title": "Font lacks Arabic glyphs",
+    "section": "rtl",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Falls back to a system face — inconsistent weights, broken ligatures, tofu.",
+    "correct": "Enforce Arabic-capable faces (Tajawal / Cairo / IBM Plex Sans Arabic per the standing rule) with an explicit Arabic subset.",
+    "detectNotes": "No detect method documented in the source entry. [S] check the active font stack includes an allow-listed Arabic-capable face. [V] snapshot confirms actual glyph rendering. Advisory: a name-matching allow-list misses custom/self-hosted fonts not on the list.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-806",
+    "title": "Animations directionally wrong in RTL",
+    "section": "rtl",
+    "severity": "P2",
+    "detect": [
+      "visual"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Drawers slide in from the wrong edge; \"next\" transitions run backwards.",
+    "correct": "Drive slide/transition direction from the active `dir`, not a hardcoded LTR assumption.",
+    "detectNotes": "No detect method documented in the source entry. [V] snapshot drawers/transitions in RTL; judging \"wrong edge\"/\"backwards\" is a visual assessment.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-807",
+    "title": "Hardcoded strings",
+    "section": "rtl",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "User-facing text is hardcoded in English rather than routed through the i18n layer, so it never localises.",
+    "correct": "Route all user-facing text through the translation layer (`t()`/i18n calls); no raw literal strings in components.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag literal string nodes in JSX/templates not wrapped in a translation call. Advisory: real risk of false positives on intentional non-translated strings (aria-labels, dev-only text, brand names).",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-808",
+    "title": "Numerals / dates / currency unlocalised",
+    "section": "rtl",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Arabic-Indic vs Latin digits used inconsistently within one screen.",
+    "correct": "Use `Intl.NumberFormat`/`Intl.DateTimeFormat` (or the app's i18n layer) consistently instead of hardcoded digit/date/currency formatting.",
+    "detectNotes": "No detect method documented in the source entry. [S] flag manual number/date/currency formatting instead of `Intl.*`/i18n helpers. Advisory: heuristic pattern match over arbitrary formatting code.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-901",
+    "title": "Wrong keyboard type",
+    "section": "forms",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Missing `inputmode` / wrong `type`: email, tel, numeric, decimal, search, url — so mobile users get the generic keyboard instead of the one suited to the field.",
+    "correct": "Set the correct `type`/`inputmode` per field (email, tel, numeric, decimal, search, url).",
+    "detectNotes": "No detect method documented in the source entry. [S] scan of input elements for missing/incorrect type or inputmode given the field's semantic purpose (name/id/label heuristics). Advisory: matching \"wrong type\" needs semantic inference from field name/label.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-902",
+    "title": "`autocomplete` tokens missing",
+    "section": "forms",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Kills password managers and — critically — missing `autocomplete=\"one-time-code\"` breaks iOS SMS OTP autofill.",
+    "correct": "Add appropriate autocomplete tokens to every relevant field, including `autocomplete=\"one-time-code\"` on OTP inputs.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan of input elements for missing autocomplete attributes given field semantics. Advisory: same semantic-inference risk as P-901.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-903",
+    "title": "Keyboard covers the focused field",
+    "section": "forms",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "iOS does not resize the layout viewport for the keyboard, so a focused field can end up covered by the virtual keyboard with no scroll compensation.",
+    "correct": "Scroll the focused element into view on `focus`, accounting for the visual viewport (P-104).",
+    "detectNotes": "[R] simulate keyboard/focus and assert the focused field remains visible above the visual viewport bottom. [D] real device is authoritative.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-904",
+    "title": "Fixed submit CTA buried by the keyboard",
+    "section": "forms",
+    "severity": "P1",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "A fixed submit CTA sits at `bottom: 0`, but the virtual keyboard covers it because iOS doesn't resize the layout viewport, making the primary action unreachable while typing.",
+    "correct": "Drive the CTA's position from the VisualViewport API (or reserve keyboard-safe space) so it stays above the keyboard, same pattern as P-104.",
+    "detectNotes": "[R] simulate keyboard open, assert the CTA remains within the visible viewport. [D] real device is authoritative.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-905",
+    "title": "`enterkeyhint` unset",
+    "section": "forms",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The Return key should read Go / Search / Send / Next, but shows a generic label because `enterkeyhint` is unset.",
+    "correct": "Set `enterkeyhint` to the action-appropriate value (go/search/send/next) per field.",
+    "detectNotes": "No detect method documented in the source entry. [S] scan of form inputs for missing `enterkeyhint` attribute on the final/action field.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-906",
+    "title": "Enter doesn't submit",
+    "section": "forms",
+    "severity": "P2",
+    "detect": [
+      "runtime"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Pressing Enter in a form field does not submit the form, forcing users to hunt for a submit button.",
+    "correct": "Ensure the Enter key submits the form (native form submit behavior, or an explicit keydown handler wired to the submit action).",
+    "detectNotes": "No detect method documented in the source entry. [R] focus a field, press Enter, assert the form submit handler fires.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-907",
+    "title": "Paste blocked on OTP inputs",
+    "section": "forms",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Split six-box OTP components that reject a pasted code are an agent classic.",
+    "correct": "Handle a paste event on OTP inputs by distributing the pasted code across the boxes (or use a single input styled as boxes).",
+    "detectNotes": "No detect method documented in the source entry. [S] scan OTP/split-input components for a paste handler. [R] paste a code and assert all boxes populate. Advisory: identifying \"an OTP component\" from source is a semantic classification.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-908",
+    "title": "Validation only on submit, native bubbles unstyled",
+    "section": "forms",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Validation only runs on submit (not inline/on-blur) and native browser validation bubbles are left unstyled, clashing with the app's design and appearing late.",
+    "correct": "Validate inline (on blur/change) with styled error messages, and suppress/replace native validation bubble UI (e.g. `novalidate` + custom messaging).",
+    "detectNotes": "No detect method documented in the source entry. [S] flag absence of onBlur/onChange validation wiring and lack of custom error-message styling, form left to native `:invalid` bubbles. Advisory: judging \"unstyled\"/\"only on submit\" from source is heuristic.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1001",
+    "title": "Theme flash on load (FOUC)",
+    "section": "theming",
+    "severity": "P1",
+    "detect": [
+      "static",
+      "runtime"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "There's no blocking inline script to apply the stored/system theme before first paint, so a white flash appears into a dark app on every cold start — which installed PWAs do constantly.",
+    "correct": "Inline a blocking script in `<head>` that reads the stored/system theme preference and sets it (e.g. a class or `color-scheme`) before first paint.",
+    "detectNotes": "No detect method documented in the source entry. [S] check for a blocking inline theme-setting script in `<head>` before stylesheets/hydration. [R] assert no flash of wrong theme on cold load. Advisory: confirming genuine pre-paint ordering needs inference.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1002",
+    "title": "`color-scheme` not declared",
+    "section": "theming",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Native controls, scrollbars, and form widgets stay light inside a dark app.",
+    "correct": "Declare `color-scheme` (meta tag and/or CSS) matching the active theme, `light`/`dark`/`light dark` as appropriate.",
+    "detectNotes": "No detect method documented in the source entry. [S] check presence of a `color-scheme` meta tag/CSS property matching the theme system.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1003",
+    "title": "Splash `background_color` ≠ app background",
+    "section": "theming",
+    "severity": "P2",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "The manifest's `background_color` (splash screen) doesn't match the app's true initial background, so users see a mismatched colour flash between the splash screen and first paint.",
+    "correct": "Set `background_color` to the app's actual initial background colour, per colour scheme.",
+    "detectNotes": "No detect method documented in the source entry. [L] compare manifest `background_color` against the rendered initial background. Advisory: colour comparison needs a tolerance judgment, and can vary by scheme.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1004",
+    "title": "`theme-color` not switched per scheme",
+    "section": "theming",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`theme-color` is a single static value that doesn't switch with the active colour scheme (light/dark), so the browser chrome/status bar colour clashes with the app once it's in dark mode. See P-408.",
+    "correct": "Provide `theme-color` meta variants scoped with `media=\"(prefers-color-scheme: dark|light)\"`, matching the manifest and the real painted background, same as P-408.",
+    "detectNotes": "No detect method documented in the source entry. [S] static cross-check of `theme-color` meta variants against the active scheme, per P-408.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1005",
+    "title": "Hardcoded hex instead of tokens",
+    "section": "theming",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Hardcoded hex colour values are used instead of design tokens/CSS variables, so the dark-mode variant is guaranteed to be missed somewhere those hardcoded values live.",
+    "correct": "Use theme tokens/CSS custom properties for all colour values instead of hardcoded hex, so every consumer picks up both light and dark variants automatically.",
+    "detectNotes": "No detect method documented in the source entry. [S] grep hex colour literals in component/style source outside the token definitions themselves. Advisory: real risk of false positives from legitimate one-off hex (brand colours, gradients, third-party palettes).",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1101",
+    "title": "Wrong `base` path on subpath deploys",
+    "section": "build-deploy",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Manifest, SW scope, and asset URLs all break together.",
+    "correct": "Set the build's base path, manifest paths, and SW registration scope consistently to the actual deploy subpath.",
+    "detectNotes": "No detect method documented in the source entry. [S] cross-check the build's base config against manifest/SW-registration paths.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1102",
+    "title": "`Cache-Control` wrong on `sw.js` / manifest",
+    "section": "build-deploy",
+    "severity": "P0",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "See P-514 — worth stating separately because it lives in server/CDN config, not app code, so it survives every app-side fix.",
+    "correct": "Set `Cache-Control: no-cache` on `sw.js` and the manifest at the server/CDN layer, same as P-514.",
+    "detectNotes": "[S] response-header assertion against the deployed origin for `sw.js`/manifest, or against the headers config file (same check as P-514, at the infra layer).",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1103",
+    "title": "Framework PWA plugin misconfigured",
+    "section": "build-deploy",
+    "severity": "P1",
+    "detect": [
+      "static"
+    ],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "`next-pwa` / `vite-plugin-pwa` with App Router, static export, or middleware interactions — precache manifest generated for the wrong output dir.",
+    "correct": "Configure the PWA plugin correctly for the framework mode in use (App Router/static export/middleware) and verify the precache manifest targets the real output directory.",
+    "detectNotes": "No detect method documented in the source entry. [S] check the PWA plugin config against the framework's build output mode/directory. Advisory: correctness depends on framework-specific interactions that are hard to verify generically.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1104",
+    "title": "Installability never actually verified",
+    "section": "build-deploy",
+    "severity": "P1",
+    "detect": [
+      "lighthouse"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "No one ran the audit; \"it has a manifest\" is assumed to mean installable.",
+    "correct": "Run a Lighthouse/PWA installability audit as part of the release process and require it pass before calling the PWA work done.",
+    "detectNotes": "No detect method documented in the source entry. [L] Lighthouse installability audit.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1105",
+    "title": "Missing `.well-known/assetlinks.json` for TWA",
+    "section": "build-deploy",
+    "severity": "P2",
+    "detect": [
+      "static"
+    ],
+    "confidence": "high",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Only if shipping to Play via Trusted Web Activity — the URL bar stays visible without it.",
+    "correct": "Publish a correct `.well-known/assetlinks.json` linking the TWA package to the site, only relevant when shipping via TWA.",
+    "detectNotes": "No detect method documented in the source entry. [S] check for presence and correctness of `.well-known/assetlinks.json` when a TWA/Android wrapper is present.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1201",
+    "title": "Never opened on a real device — emulation passes, iOS fails",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "Never opened on a real device — emulation passes, iOS fails.",
+    "correct": "Run the device matrix (real iOS Safari + Android Chrome) before declaring PWA work done, not emulation alone.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1202",
+    "title": "Tested at desktop viewport only",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Tested at desktop viewport only.",
+    "correct": "Test at the canonical mobile width set (320/360/390/430/768/1024) plus landscape before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1203",
+    "title": "Never tested the second deploy — the update path is where the P0s live",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested the second deploy — the update path (§5) is where the P0s live.",
+    "correct": "Run the deploy-A-to-deploy-B update-path test (P-512) before declaring the service-worker/update work done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1204",
+    "title": "Never tested offline",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested offline.",
+    "correct": "Test the app with the network disabled (airplane mode / devtools offline) before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1205",
+    "title": "Never tested the install flow end-to-end, on either platform",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested the install flow end-to-end, on either platform.",
+    "correct": "Walk the real install flow end-to-end on both iOS (Add to Home Screen) and Chromium (install prompt) before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1206",
+    "title": "Never tested with the keyboard open",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "Never tested with the keyboard open.",
+    "correct": "Open the on-screen keyboard on every form screen and check fixed CTAs/composers stay reachable before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1207",
+    "title": "Never tested in RTL",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested in RTL.",
+    "correct": "Switch the app to RTL (`dir=rtl` / an Arabic locale) and re-check layout before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1208",
+    "title": "Never tested with a screen reader or keyboard-only",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested with a screen reader or keyboard-only.",
+    "correct": "Run a full screen-reader and keyboard-only pass before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1209",
+    "title": "Never tested on a throttled CPU/network",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Never tested on a throttled CPU/network.",
+    "correct": "Re-test with mobile CPU throttling (4–6x) and a throttled network before declaring done.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  },
+  {
+    "id": "P-1210",
+    "title": "Declared \"done\" from a green build — no runtime evidence",
+    "section": "meta",
+    "severity": "P1",
+    "detect": [],
+    "confidence": "advisory",
+    "deviceOnly": false,
+    "aiWrites": null,
+    "symptom": "Declared \"done\" from a green build — no runtime evidence.",
+    "correct": "Require actual runtime evidence (a report, a recording, or a live pass) before declaring PWA work done — a green build is not runtime evidence.",
+    "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "18.x",
+      "chrome": "13x",
+      "date": "2026-07-30"
+    }
+  }
+]

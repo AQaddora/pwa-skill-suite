@@ -3,6 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test packages/*/test/*.test.mjs"
+    "test": "node --test packages/*/test/*.test.mjs",
+    "probes": "node packages/probes/cli.mjs",
+    "harness": "node packages/deploy-harness/cli.mjs",
+    "verify": "node skills/pwa-verify/scripts/run-verify.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.0"
   }
 }

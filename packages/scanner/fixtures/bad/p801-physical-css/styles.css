@@ -1,0 +1,9 @@
+.card {
+  margin-left: 16px;
+  padding-right: 8px;
+  text-align: left;
+}
+.pinned {
+  position: absolute;
+  left: 0;
+}

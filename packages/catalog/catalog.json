@@ -2602,7 +2602,7 @@
     "symptom": "Physical-direction CSS properties don't flip in RTL, so layout, spacing, and text alignment stay LTR-shaped inside an Arabic UI.",
     "correct": "`margin-inline-start`, `padding-inline-end`, `inset-inline-start`, `text-align: start`. In Tailwind: `ms-*`/`me-*`/`ps-*`/`pe-*`, not `ml-*`/`mr-*`.",
     "detectNotes": "[S] flag physical properties in any RTL-capable surface — mechanical and very high yield.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p801-physical-css.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

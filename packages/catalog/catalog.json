@@ -36,7 +36,7 @@
     "symptom": "iOS `vh` is sized to the expanded viewport, ignoring the URL bar. Bottom content and fixed CTAs sit below the fold; a full-height layout scrolls when it shouldn't.",
     "correct": "`100dvh` with a `100vh` fallback for old engines; or the `--vh` JS custom-property pattern where `dvh` isn't viable. Know the family: `svh` (smallest/URL-bar-visible), `lvh` (largest), `dvh` (dynamic).",
     "detectNotes": "[S] flag `100vh` / `h-screen` in any layout-critical rule. [R] assert no vertical overflow with the URL bar simulated. Advisory: `h-screen` is legitimate inside a fixed shell — flag, don't fail.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p102-100vh.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -60,7 +60,7 @@
     "symptom": "The tab bar sits under the home indicator and is partly untappable; the header hides behind the notch/Dynamic Island.",
     "correct": "`<meta name=\"viewport\" content=\"... viewport-fit=cover\">` and `padding-bottom: calc(12px + env(safe-area-inset-bottom))` on the bottom bar, `env(safe-area-inset-top)` on the header, plus `-left`/`-right` in landscape.",
     "detectNotes": "[S] `viewport-fit=cover` present AND every `position: fixed` edge-anchored element references the matching `env(safe-area-inset-*)`. [V] snapshot on a notched device profile. Advisory: matching an element's anchored edge to the right inset is a bundled heuristic, not a single crisp match.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p103-safe-area-env.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -150,7 +150,7 @@
     "symptom": "`100vw` includes the scrollbar gutter, causing a few px of horizontal scroll, which on mobile becomes a visible sideways drag of the whole app.",
     "correct": "`width: 100%` / `100dvw`, or `max-width: 100%`.",
     "detectNotes": "[S] flag `100vw`. [R] assert `document.scrollingElement.scrollWidth <= clientWidth` at 320/360/390/430px.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p107-100vw.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

@@ -506,7 +506,7 @@
     "symptom": "Spinner arrows, scroll-wheel value changes, silently strips leading zeros, and gives the wrong keyboard.",
     "correct": "`type=\"tel\"` or `inputmode=\"numeric\" pattern=\"[0-9]*\"`. For OTP add `autocomplete=\"one-time-code\"`.",
     "detectNotes": "[S] flag `type=\"number\"` on non-quantity fields. Advisory: \"non-quantity\" is a semantic classification of the field, not a literal match.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p123-type-number.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -2781,7 +2781,7 @@
     "symptom": "Missing `inputmode` / wrong `type`: email, tel, numeric, decimal, search, url — so mobile users get the generic keyboard instead of the one suited to the field.",
     "correct": "Set the correct `type`/`inputmode` per field (email, tel, numeric, decimal, search, url).",
     "detectNotes": "No detect method documented in the source entry. [S] scan of input elements for missing/incorrect type or inputmode given the field's semantic purpose (name/id/label heuristics). Advisory: matching \"wrong type\" needs semantic inference from field name/label.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p901-inputmode.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -2803,7 +2803,7 @@
     "symptom": "Kills password managers and — critically — missing `autocomplete=\"one-time-code\"` breaks iOS SMS OTP autofill.",
     "correct": "Add appropriate autocomplete tokens to every relevant field, including `autocomplete=\"one-time-code\"` on OTP inputs.",
     "detectNotes": "No detect method documented in the source entry. [S] scan of input elements for missing autocomplete attributes given field semantics. Advisory: same semantic-inference risk as P-901.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p902-autocomplete.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

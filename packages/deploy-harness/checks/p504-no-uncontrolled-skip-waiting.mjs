@@ -4,6 +4,7 @@
 // observable signature of assets swapping mid-session without consent.
 import { makeFinding } from '../lib/finding.mjs';
 import { aggregate } from '../lib/outcome.mjs';
+import { waitForServiceWorkerReady } from '../lib/ready.mjs';
 
 const OBSERVE_MS = 3000;
 
@@ -16,7 +17,9 @@ export default {
     try {
       proxy.swapTo(buildADir);
       await page.goto(proxy.url + '/', { waitUntil: 'load' });
-      await page.evaluate(() => navigator.serviceWorker.ready);
+      if (!(await waitForServiceWorkerReady(page))) {
+        return aggregate({ resolved: false, detail: 'the SW never activated on build A — cannot exercise the swap' });
+      }
 
       proxy.swapTo(buildBDir);
       // Give the browser a chance to notice the new sw.js (as it would in the background)

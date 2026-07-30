@@ -86,7 +86,7 @@ test('P-514 fails when sw.js is served with a long/immutable cache TTL', async (
   });
   const proxy = await createSwapProxy(badOrigin);
   try {
-    const result = await p514.run({ proxy });
+    const result = await p514.run({ proxy, buildADir: badOrigin });
     assert.equal(result.outcome, 'FAIL');
     assert.match(result.findings[0].excerpt, /sw\.js/);
   } finally {

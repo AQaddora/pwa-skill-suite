@@ -27,6 +27,7 @@ import {
 import { runHarness } from '../../../packages/deploy-harness/runner.mjs';
 import {
   collectFindings as collectHarnessFindings,
+  anyFailures as anyHarnessFailures,
   renderHarnessOutcomes,
 } from '../../../packages/deploy-harness/report.mjs';
 
@@ -92,10 +93,17 @@ export async function runVerify(projectRoot) {
   const allFindings = [...scanFindings, ...probeFindings, ...harnessFindings];
   const model = buildReport({ findings: allFindings, catalog, surfaces });
 
+  // model.summary.p0/p1/p2 undercounts here: catalog `confidence` was set for the static
+  // scanner rule's heuristic reliability, and most harness/probe entries carry
+  // confidence:'advisory' for that reason — but a harness/probe FAIL is an empirically
+  // observed runtime defect, not a heuristic guess, so gating must check outcomes directly
+  // rather than trusting the advisory-excluded summary buckets (that gap previously let a
+  // P-523 cross-user data leak, the most severe finding this suite can produce, exit 0).
   const failed =
     model.summary.p0 + model.summary.p1 + model.summary.p2 > 0 ||
     anyProbeFailures(probeResults) ||
     anyBlocked(probeResults) ||
+    anyHarnessFailures(harnessResults) ||
     anyBlocked(harnessResults);
 
   const markdown = [

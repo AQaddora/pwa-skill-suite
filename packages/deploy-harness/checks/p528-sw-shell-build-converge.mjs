@@ -3,6 +3,7 @@
 // and the now-controlling SW's build id converge on the same value.
 import { makeFinding } from '../lib/finding.mjs';
 import { aggregate } from '../lib/outcome.mjs';
+import { waitForServiceWorkerReady } from '../lib/ready.mjs';
 
 export default {
   ids: ['P-528'],
@@ -13,7 +14,9 @@ export default {
     try {
       proxy.swapTo(buildADir);
       await page.goto(proxy.url + '/', { waitUntil: 'load' });
-      await page.evaluate(() => navigator.serviceWorker.ready);
+      if (!(await waitForServiceWorkerReady(page))) {
+        return aggregate({ resolved: false, detail: 'the SW never activated on build A — cannot exercise the swap' });
+      }
 
       proxy.swapTo(buildBDir);
       const applied = await page.evaluate(() => window.app.applyUpdate());

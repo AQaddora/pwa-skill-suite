@@ -3,6 +3,7 @@
 // cache-first, the reload would still render A. It must render B.
 import { makeFinding } from '../lib/finding.mjs';
 import { aggregate } from '../lib/outcome.mjs';
+import { waitForServiceWorkerReady } from '../lib/ready.mjs';
 
 export default {
   ids: ['P-502'],
@@ -13,7 +14,9 @@ export default {
     try {
       proxy.swapTo(buildADir);
       await page.goto(proxy.url + '/', { waitUntil: 'load' });
-      await page.evaluate(() => navigator.serviceWorker.ready);
+      if (!(await waitForServiceWorkerReady(page))) {
+        return aggregate({ resolved: false, detail: 'the SW never activated on build A — cannot exercise the swap' });
+      }
 
       proxy.swapTo(buildBDir);
       await page.reload({ waitUntil: 'load' });

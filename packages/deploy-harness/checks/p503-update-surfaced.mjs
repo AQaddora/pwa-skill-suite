@@ -3,6 +3,7 @@
 // to it) rather than sitting on it with no path to find out.
 import { makeFinding } from '../lib/finding.mjs';
 import { aggregate } from '../lib/outcome.mjs';
+import { waitForServiceWorkerReady } from '../lib/ready.mjs';
 
 export default {
   ids: ['P-503'],
@@ -13,7 +14,9 @@ export default {
     try {
       proxy.swapTo(buildADir);
       await page.goto(proxy.url + '/', { waitUntil: 'load' });
-      await page.evaluate(() => navigator.serviceWorker.ready);
+      if (!(await waitForServiceWorkerReady(page))) {
+        return aggregate({ resolved: false, detail: 'the SW never activated on build A — cannot exercise the swap' });
+      }
 
       proxy.swapTo(buildBDir);
       const found = await page.evaluate(() => window.app.waitForRegistrationUpdate().then((w) => !!w));

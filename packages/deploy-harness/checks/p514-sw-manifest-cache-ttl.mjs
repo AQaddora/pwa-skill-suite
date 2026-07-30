@@ -17,7 +17,8 @@ function isLongCached(cacheControl) {
 export default {
   ids: ['P-514'],
   name: 'sw.js / manifest are not served with a long cache TTL',
-  async run({ proxy }) {
+  async run({ proxy, buildADir }) {
+    proxy.swapTo(buildADir);
     const targets = ['/sw.js', '/manifest.webmanifest'];
     const findings = [];
     for (const target of targets) {

@@ -216,7 +216,7 @@
     "symptom": "Interactive elements lack `touch-action: manipulation`, so taps can trigger the browser's double-tap-to-zoom gesture. Historically this class of fix was framed around a ~300ms tap delay, but that delay is already gone in modern browsers given a correct viewport meta — the property's real remaining value today is suppressing double-tap zoom.",
     "correct": "Add `touch-action: manipulation` to interactive elements to suppress double-tap zoom. The 300ms delay itself is no longer an issue in modern browsers with a correct viewport meta; don't cite delay-removal as the justification.",
     "detectNotes": "[S] scanner on buttons/links/tappables.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p110-touch-action.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -2336,7 +2336,7 @@
     "symptom": "WCAG 1.4.4 failure. Low-vision users cannot zoom. iOS 10+ ignores it in Safari anyway, so it fails and doesn't work.",
     "correct": "Fix input zoom with 16px fonts (P-101). Leave pinch zoom enabled. Blocking pinch zoom is a WCAG 1.4.4 failure the suite must never emit — this is a FAIL, never a suggestion.",
     "detectNotes": "[S] grep the viewport meta content for `user-scalable=no` / `maximum-scale=1` (or <1). Crisp presence check — the suite fails this on sight.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p701-user-scalable.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

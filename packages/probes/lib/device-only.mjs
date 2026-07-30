@@ -1,4 +1,11 @@
-// The eight device-only catalog entries and their real-device reproduction steps.
+// The device-only catalog entries and their real-device reproduction steps.
+//
+// This list is deliberately hand-curated, not derived from catalog.json's `deviceOnly`
+// flag: real reproduction steps need a human to write them meaningfully, and an
+// auto-derived list would silently drop new device-only entries into a generic message
+// instead of failing loudly. test/probe-p101-deviceonly.test.mjs cross-checks this map
+// against the catalog on every run specifically so a new deviceOnly:true entry (like
+// P-540/P-551, added by a later phase) fails CI here rather than shipping uncovered.
 //
 // Playwright WebKit is not iOS Safari: it has no input-zoom heuristic, no URL-bar viewport
 // collapse, no home-screen icon pipeline, no virtual-keyboard geometry, and no ITP eviction.
@@ -41,6 +48,16 @@ export const DEVICE_ONLY_REPRODUCTION = {
   'P-1206': [
     'On a real device, open every screen that has an input with the keyboard raised.',
     'If layout, fixed elements, or the submit affordance break with the keyboard open, this fails.',
+  ],
+  'P-540': [
+    'Log in on the site in mobile Safari (not the installed app).',
+    'Install the app to the Home Screen, then relaunch it from the Home Screen icon.',
+    'If the installed app opens signed out (or loops back to login through an out-of-scope Safari sheet), this fails — iOS gives the installed app its own storage partition, separate from Safari.',
+  ],
+  'P-551': [
+    'Grant camera/microphone access once, in one session, on a real iOS device.',
+    'Fully quit Safari/the installed app and reopen it in a new session.',
+    'If the app assumes the earlier grant still holds and skips its own permission-state check (rather than tolerating a fresh prompt), this fails — iOS scopes these permissions per session, not per install.',
   ],
 };
 

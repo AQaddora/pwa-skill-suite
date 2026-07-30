@@ -3380,7 +3380,7 @@
     "correct": "Treat first launch of the installed app as a cold session with no assumed prior auth state. Make first-run auth cheap: OTP, magic link, or passkey rather than a heavy re-login form. Keep the entire auth flow same-origin and in-scope of the manifest so it runs inside the installed app's own storage partition, never inside an out-of-scope Safari sheet.",
     "detectNotes": "Device-only: the storage partition split between Safari and an installed home-screen web app, and the sheet-vs-app cookie jar boundary, only exist on a real iOS device/simulator running the actual WebKit install pipeline — no static or CI-runtime signal reproduces it. [D] real-device verification: log in in Safari, install, relaunch from the home screen, and assert the session is gone.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -3620,7 +3620,7 @@
     "correct": "Treat camera/mic permission as potentially stale on iOS every session: check current grant state before relying on it, and design the UI to tolerate a permission prompt appearing at any point in a flow, not only at onboarding.",
     "detectNotes": "[D]: whether iOS scopes a given permission to the browsing session is a WebKit platform fact that only reproduces on real iOS — no static signal or CI runtime distinguishes a permission-caching bug from correct per-session-aware handling.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",

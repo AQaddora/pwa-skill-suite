@@ -23,14 +23,15 @@ test('P-101 with clean font-size is UNVERIFIED, NEVER PASS (zoom is device-only)
   assert.ok(res.reproduction && /real iPhone/.test(res.reproduction));
 });
 
-test('all eight catalog device-only entries are covered with reproduction steps', () => {
+test('every catalog device-only entry is covered with reproduction steps', () => {
   const flagged = catalog.filter((e) => e.deviceOnly).map((e) => e.id).sort();
   assert.deepEqual(DEVICE_ONLY_IDS.slice().sort(), flagged);
 });
 
-test('deviceOnlyResults reports UNVERIFIED for the seven non-P-101 device-only entries', () => {
+test('deviceOnlyResults reports UNVERIFIED for every non-P-101 device-only entry', () => {
   const results = deviceOnlyResults(catalog);
-  assert.equal(results.length, 7);
+  const expected = catalog.filter((e) => e.deviceOnly && e.id !== 'P-101').length;
+  assert.equal(results.length, expected);
   for (const r of results) {
     assert.equal(r.outcome, 'UNVERIFIED');
     assert.ok(r.reproduction.length > 0);

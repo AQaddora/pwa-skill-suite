@@ -49,7 +49,7 @@ Five outcomes total, three of which block the gate:
 | `BLOCKED` | **yes** | a check could not resolve its target or seed the state it needed — this is *not* a pass; fix the config/seed and re-run |
 | `PASS` | no | verified clean |
 | `N/A` | no | the surface doesn't exist in this app (no forms, no SW yet, origin-only check on a local target) |
-| `UNVERIFIED` (device-only) | no, but **must be listed** | WebKit-in-CI is not iOS Safari — eight catalog entries cannot be proven here. The report always renders a "Verify on a real device" block with reproduction steps for these. Never claim these are done without a real-device check; never let a clean CI run imply otherwise. |
+| `UNVERIFIED` (device-only) | no, but **must be listed** | WebKit-in-CI is not iOS Safari — a handful of catalog entries (`packages/probes/lib/device-only.mjs`) cannot be proven here. The report always renders a "Verify on a real device" block with reproduction steps for these. Never claim these are done without a real-device check; never let a clean CI run imply otherwise. |
 
 The script exits non-zero on any `FAIL` or `BLOCKED`. A "done" claim requires exit 0 —
 and even then, read the `UNVERIFIED` block out loud before saying so, since exit 0 does

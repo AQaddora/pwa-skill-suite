@@ -3,7 +3,7 @@
 // same convention Phase 1 used for `rule`. Idempotent: re-run whenever probes are added.
 //
 //   - each probes/<id>.mjs module → its own file path, for the ids it declares
-//   - the seven non-P-101 device-only entries → lib/device-only.mjs (they are reported
+//   - the non-P-101 device-only entries → lib/device-only.mjs (they are reported
 //     UNVERIFIED with reproduction steps, which is the honest "coverage" they have)
 //
 // Only the `probe` field is touched; all other fields are preserved byte-for-byte in shape.

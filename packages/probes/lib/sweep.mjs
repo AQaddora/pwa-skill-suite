@@ -19,7 +19,7 @@ import { aggregate } from './outcome.mjs';
  * @param {boolean} [o.authenticated]
  * @param {string}  [o.detail]
  */
-export async function elementSweep(harness, { id, cells, collect, deviceOnly = false, originOnly = false, authenticated = false, detail = '' }) {
+export async function elementSweep(harness, { id, cells, collect, deviceOnly = false, originOnly = false, authenticated = false, detail = '', reproduction }) {
   const routes = harness.config.routes;
   const findings = [];
   for (const cell of cells) {
@@ -42,6 +42,7 @@ export async function elementSweep(harness, { id, cells, collect, deviceOnly = f
     originOnly,
     targetIsLocal: harness.config.targetIsLocal,
     resolved: true,
+    reproduction,
     detail: detail || `swept ${[...cells].length} cell(s) × ${routes.length} route(s)`,
   });
 }

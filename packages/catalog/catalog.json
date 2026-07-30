@@ -823,7 +823,7 @@
     "symptom": "Fixed pixel widths on layout containers don't adapt to the viewport, causing overflow or wasted space on other screen sizes.",
     "correct": "Fluid widths + `max-width`.",
     "detectNotes": "No detect method documented in the source entry. [S] flag literal px widths / Tailwind arbitrary `w-[Npx]` values. Advisory: small fixed widths (icons, avatars) are legitimate; only large/layout-scale widths are real findings, which needs a size threshold.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p302-hardcoded-px-widths.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -2375,13 +2375,13 @@
       "static",
       "runtime"
     ],
-    "confidence": "high",
+    "confidence": "advisory",
     "deviceOnly": false,
     "aiWrites": null,
     "symptom": "The tab bar is the usual offender — a screen-reader user hears nothing meaningful for the control.",
     "correct": "`aria-label` or visually-hidden text.",
     "detectNotes": "No detect method documented in the source entry. [S] flag icon-only buttons (no text child) lacking `aria-label`/`aria-labelledby`/visually-hidden text. [R] confirm the accessible name via the accessibility tree.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p703-icon-button-name.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

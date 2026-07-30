@@ -30,13 +30,25 @@ function listFilesRecursive(dir, base = dir, acc = new Set()) {
   return acc;
 }
 
-function findBuildOutput(startDir) {
+// The scanner's own scan root, reconstructed from `absFile` and the relative `file`
+// path the walker reports for it (one `dirname()` per path segment in `file`). Bounds
+// the upward build-dir search below so a subpackage of a monorepo can't pick up an
+// unrelated sibling package's `dist`/`build`/`public`/`out` directory.
+function computeScanRoot(absFile, file) {
+  let dir = absFile;
+  const segments = file.split('/').length;
+  for (let i = 0; i < segments; i++) dir = path.dirname(dir);
+  return dir;
+}
+
+function findBuildOutput(startDir, scanRoot) {
   let dir = startDir;
   for (let i = 0; i < 3; i++) {
     for (const name of BUILD_DIR_NAMES) {
       const candidate = path.join(dir, name);
       if (existsSync(candidate)) return candidate;
     }
+    if (dir === scanRoot) break;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -72,7 +84,8 @@ export function check({ file, contents, ext, absFile }) {
   const urls = [...listSource.matchAll(/['"`]([^'"`]+)['"`]/g)].map((m) => m[1]);
   if (urls.length === 0) return [];
 
-  const buildDir = findBuildOutput(path.dirname(absFile));
+  const scanRoot = computeScanRoot(absFile, file);
+  const buildDir = findBuildOutput(path.dirname(absFile), scanRoot);
   if (!buildDir) return [];
   const builtFiles = listFilesRecursive(buildDir);
 

@@ -7,7 +7,9 @@ export const ids = ['P-552'];
 
 const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte']);
 const WAKE_LOCK_REQUEST = /wakeLock\s*\.\s*request\s*\(/;
-const VISIBILITY_CHANGE = /visibilitychange/;
+// Call-shaped, not a bare substring check — a comment merely mentioning
+// "visibilitychange" (e.g. a TODO) must not count as the re-acquire listener existing.
+const VISIBILITY_CHANGE = /addEventListener\(\s*['"]visibilitychange['"]/;
 
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];

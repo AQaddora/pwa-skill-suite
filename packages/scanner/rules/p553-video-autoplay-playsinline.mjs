@@ -32,6 +32,10 @@ export function check({ file, contents, ext }) {
       const lineStart = contents.lastIndexOf('\n', m.index - 1) + 1;
       const linePrefix = contents.slice(lineStart, m.index);
       const after = contents.slice(m.index + m[0].length, m.index + m[0].length + 40);
+      // `.play()` is also a common method on animation/timeline/carousel libraries
+      // (GSAP, Swiper, ...) with nothing to do with <video> autoplay policy — only
+      // flag call sites whose receiver plausibly refers to a video/media element.
+      if (!/video|media/i.test(linePrefix)) continue;
       if (/\bawait\s+[\w$.]*$/.test(linePrefix)) continue;
       if (/^\s*\.(then|catch)\s*\(/.test(after)) continue;
       const { line, column } = lineColAt(contents, m.index);

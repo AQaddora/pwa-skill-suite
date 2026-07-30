@@ -12,19 +12,36 @@ const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', 
 const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.svelte-kit', '.nuxt', 'coverage', '.cache']);
 
 const BOOTSTRAP = /ReactDOM\.(?:createRoot|render)\s*\(|(?<![.\w])createRoot\s*\(|createApp\s*\(|\.mount\s*\(\s*['"#]/;
-const ERROR_BOUNDARY = /ErrorBoundary|errorCaptured|onErrorCaptured|handleError/;
+// Boundary-shaped constructs only — a bare `handleError` matches any ordinary
+// API-error-handling function and would false-negative on an app that has one of those
+// but no actual boundary (getDerivedStateFromError/componentDidCatch are React's real
+// boundary hooks; errorCaptured/onErrorCaptured are Vue 2/3; ErrorBoundary is the
+// near-universal naming convention, including the react-error-boundary package).
+const ERROR_BOUNDARY = /ErrorBoundary|errorCaptured|onErrorCaptured|getDerivedStateFromError|componentDidCatch/;
 const GLOBAL_HANDLERS = /window\.onerror|addEventListener\(\s*['"]error['"]|addEventListener\(\s*['"]unhandledrejection['"]/;
 const REPORTING_SINK = /Sentry|Bugsnag|captureException|errorReporting/i;
 
-function findProjectRoot(startDir) {
+// The scanner's own scan root, reconstructed from `absFile` and the relative `file`
+// path the walker reports for it (one `dirname()` per path segment in `file`). Bounds
+// project-root discovery below so a subpackage of a monorepo with no local
+// package.json doesn't walk up into (and then scan) unrelated sibling packages.
+function computeScanRoot(absFile, file) {
+  let dir = absFile;
+  const segments = file.split('/').length;
+  for (let i = 0; i < segments; i++) dir = path.dirname(dir);
+  return dir;
+}
+
+function findProjectRoot(startDir, scanRoot) {
   let dir = startDir;
   for (let i = 0; i < 6; i++) {
     if (existsSync(path.join(dir, 'package.json'))) return dir;
+    if (dir === scanRoot) break;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
-  return startDir;
+  return scanRoot;
 }
 
 function collectSourceFiles(dir, acc = []) {
@@ -51,7 +68,8 @@ export function check({ file, contents, ext, absFile }) {
   const m = BOOTSTRAP.exec(contents);
   if (!m) return [];
 
-  const root = findProjectRoot(path.dirname(absFile));
+  const scanRoot = computeScanRoot(absFile, file);
+  const root = findProjectRoot(path.dirname(absFile), scanRoot);
   const files = collectSourceFiles(root);
 
   let hasBoundary = false;

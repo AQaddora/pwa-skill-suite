@@ -14,7 +14,7 @@
     "correct": "Computed font-size >= 16px on every input, select, textarea. If the design needs smaller text, shrink with padding/line-height, not font-size. Do not fix this by disabling zoom (see P-701).",
     "detectNotes": "Reclassified: computed font-size cannot be read from source alone (Tailwind/CSS cascade + inheritance resolve it at render time). Phase 2 will implement this as a computed-style/DOM sweep: focus each control, assert visualViewport.scale === 1, and read computed font-size directly. [D] real iOS confirm.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p101-input-font-size.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -83,7 +83,7 @@
     "correct": "Drive the offset from the VisualViewport API (`visualViewport.height`, `offsetTop`, `resize` + `scroll` events), or use `interactive-widget=resizes-content` in the viewport meta where supported.",
     "detectNotes": "[R] simulate keyboard, assert bar's bounding box stays above the visual viewport bottom. [D] real device is authoritative.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -327,7 +327,7 @@
     "correct": "Every route deeper than a tab root renders an in-app back affordance; verify against `matchMedia('(display-mode: standalone)')`.",
     "detectNotes": "Reclassified: standalone display-mode is a runtime-only client condition (`matchMedia('(display-mode: standalone)')`), invisible to source. [R] launch in standalone display-mode, walk every route, assert a back control or tab-root status.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p115-standalone-back.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -372,7 +372,7 @@
     "correct": "Persist critical state on `visibilitychange` -> `hidden` / `pagehide`, rehydrate on load. Never rely on the process surviving.",
     "detectNotes": "[R] simulate `pagehide`/reload, assert state restored. [D] real backgrounding.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -463,7 +463,7 @@
     "correct": "`apple-touch-startup-image` per device via media queries, or accept the `background_color` splash — but make it match the app background (see P-1003).",
     "detectNotes": "[S] presence check + `background_color` consistency. [D] real launch confirms the actual flash.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -576,7 +576,7 @@
     "correct": "Fixed/sticky to the bottom, above content in stacking order, safe-area padded (P-103), and rendered once in a persistent shell (P-203).",
     "detectNotes": "[S] check the tab-bar component's CSS for `position: fixed`/`sticky` as a proxy. [R] scroll to the bottom of every tab route, assert the bar's box is unchanged. Advisory: the static proxy only catches literal CSS, not JS-driven positioning.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p201-tabbar-fixed.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -598,7 +598,7 @@
     "correct": "Scroll container gets `padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom))`. Derive both from one token so they can't drift.",
     "detectNotes": "[R] assert the last focusable element in each scroller is fully visible when scrolled to the end.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p202-content-behind-bar.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -621,7 +621,7 @@
     "correct": "Shell layout (tab bar + header) mounted above the router outlet, only the outlet swaps.",
     "detectNotes": "[R] tag the bar node, navigate, assert the same DOM node identity survives.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p203-shell-identity.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -643,7 +643,7 @@
     "correct": "Persist scrollTop per tab; restore on re-entry; reset on explicit tab re-tap (native \"tap active tab -> scroll to top\" idiom).",
     "detectNotes": "[R] scroll, switch away, return, assert scrollTop restored +/-2px.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p204-scroll-restore.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -712,7 +712,7 @@
     "correct": "Portal overlays to `document.body` (or a top-level `#overlay-root`), or use the top layer via `<dialog>` / popover. Audit ancestors for transform-family properties.",
     "detectNotes": "Reclassified: the offending ancestor can live in any component up the tree, and identifying the actual stacking-context break requires the rendered DOM chain, not a single file's AST. Phase 2 will implement this as a computed-style/DOM sweep: assert overlay bounding box covers the viewport and sits above the tab bar.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p207-overlay-above-bar.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -734,7 +734,7 @@
     "correct": "Push a history entry when opening an overlay; close on `popstate`.",
     "detectNotes": "[R] open overlay, `history.back()`, assert overlay closed and route unchanged.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p208-back-closes-overlay.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -802,7 +802,7 @@
     "correct": "Fix the contributing sources (P-107, P-302, P-303, P-304, P-305) and eliminate any container whose content exceeds the viewport.",
     "detectNotes": "Reclassified: `scrollWidth`/`clientWidth` only exist once the page is laid out — this is unavoidably a runtime measurement, not a source-level check. [R] at 320/360/390/430px assert `scrollWidth <= clientWidth`, and on failure report the offending element by walking the DOM for boxes exceeding the viewport. A generic \"page overflows\" finding is not actionable; naming the node is.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p301-overflow.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -958,7 +958,7 @@
     "correct": "≥ 44x44 CSS px (Apple HIG) / 48dp (Material), including padding.",
     "detectNotes": "Reclassified: the effective tap-target box depends on computed padding/box-sizing, which requires the rendered layout, not source alone. [R] measure every interactive element's box; report each violation with its selector.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p308-touch-targets.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1581,7 +1581,7 @@
     "correct": "A precached offline document for failed navigations; enable `navigationPreload` to avoid the SW boot penalty.",
     "detectNotes": "[R] go offline, navigate, assert a real offline page rather than the browser error.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p509-offline-fallback.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2382,7 +2382,7 @@
     "correct": "`aria-label` or visually-hidden text.",
     "detectNotes": "No detect method documented in the source entry. [S] flag icon-only buttons (no text child) lacking `aria-label`/`aria-labelledby`/visually-hidden text. [R] confirm the accessible name via the accessibility tree.",
     "rule": "packages/scanner/rules/p703-icon-button-name.mjs",
-    "probe": null,
+    "probe": "packages/probes/probes/p703-icon-name.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2405,7 +2405,7 @@
     "correct": "Use a real `<button>`, or add `role=\"button\"`, `tabIndex`, and Enter/Space key handling.",
     "detectNotes": "No detect method documented in the source entry. [S] flag `<div onClick>`/`<span onClick>` lacking `role`, `tabIndex`, and a key handler. [R] confirm keyboard activation works.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p704-div-onclick.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2427,7 +2427,7 @@
     "correct": "`:focus-visible` ring.",
     "detectNotes": "No detect method documented in the source entry. [S] flag `outline: none`/`outline: 0` rules with no paired `:focus-visible` style elsewhere in scope. Advisory: correlating the removal with a replacement elsewhere in the stylesheet is heuristic.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p705-focus-visible.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2449,7 +2449,7 @@
     "correct": "Trap focus inside the overlay while open; restore focus to the triggering element on close.",
     "detectNotes": "[R] open overlay, tab through, assert focus stays inside; close, assert focus returns to the trigger.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p706-focus-trap.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2559,7 +2559,7 @@
     "correct": "Apply `inert` (or `aria-hidden` + focus containment) to background content while a modal is open.",
     "detectNotes": "No detect method documented in the source entry. [R] open a modal, assert background content is `inert`/unreachable by tab or screen-reader traversal.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/probes/p711-inert-bg.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2826,7 +2826,7 @@
     "correct": "Scroll the focused element into view on `focus`, accounting for the visual viewport (P-104).",
     "detectNotes": "[R] simulate keyboard/focus and assert the focused field remains visible above the visual viewport bottom. [D] real device is authoritative.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2848,7 +2848,7 @@
     "correct": "Drive the CTA's position from the VisualViewport API (or reserve keyboard-safe space) so it stays above the keyboard, same pattern as P-104.",
     "detectNotes": "[R] simulate keyboard open, assert the CTA remains within the visible viewport. [D] real device is authoritative.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -3178,7 +3178,7 @@
     "correct": "Run the device matrix (real iOS Safari + Android Chrome) before declaring PWA work done, not emulation alone.",
     "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -3278,7 +3278,7 @@
     "correct": "Open the on-screen keyboard on every form screen and check fixed CTAs/composers stay reachable before declaring done.",
     "detectNotes": "documented gap — no automated check; process/testing-discipline entry.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/probes/lib/device-only.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",

@@ -18,9 +18,11 @@ export function check({ file, contents, ext }) {
   const out = [];
   if (CSS_EXT.has(ext)) {
     for (const d of extractDeclarations(contents)) {
-      if (d.value.includes('100vw')) {
-        out.push(finding(file, d.line, d.column, `${d.property}: ${d.value}`));
-      }
+      if (!d.value.includes('100vw')) continue;
+      // `max-width: calc(100vw - 32px)` and similar calc clamps are safe, not overflow:
+      // the subtraction/clamp avoids the scrollbar-gutter overflow this rule targets.
+      if (d.property === 'max-width' || d.value.includes('calc(')) continue;
+      out.push(finding(file, d.line, d.column, `${d.property}: ${d.value}`));
     }
   }
   if (CLASS_EXT.has(ext)) {

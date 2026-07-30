@@ -210,7 +210,7 @@
     "detect": [
       "static"
     ],
-    "confidence": "high",
+    "confidence": "advisory",
     "deviceOnly": false,
     "aiWrites": null,
     "symptom": "Interactive elements lack `touch-action: manipulation`, so taps can trigger the browser's double-tap-to-zoom gesture. Historically this class of fix was framed around a ~300ms tap delay, but that delay is already gone in modern browsers given a correct viewport meta — the property's real remaining value today is suppressing double-tap zoom.",

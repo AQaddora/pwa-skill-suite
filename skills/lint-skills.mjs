@@ -55,7 +55,7 @@ export function readFrontmatter(source) {
  */
 export function lintSkill({ dirName, source, catalogIds }) {
   const problems = [];
-  const { name, description, body, hasFrontmatter } = readFrontmatter(source);
+  const { name, description, hasFrontmatter } = readFrontmatter(source);
 
   if (!hasFrontmatter) {
     problems.push('missing YAML frontmatter (--- block)');
@@ -69,7 +69,9 @@ export function lintSkill({ dirName, source, catalogIds }) {
     problems.push('`description` has no quoted trigger phrase (e.g. "audit this PWA")');
   }
 
-  const cited = new Set((body.match(ID_RE) || []));
+  // Scan the whole source (frontmatter description + body): skills legitimately
+  // cite catalog IDs in both, and an unknown ID must be caught wherever it appears.
+  const cited = new Set((source.match(ID_RE) || []));
   for (const id of [...cited].sort()) {
     if (!catalogIds.has(id)) problems.push(`cites unknown catalog ID ${id}`);
   }

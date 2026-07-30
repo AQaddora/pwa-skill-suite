@@ -6,7 +6,9 @@ import { lineColAt, excerptAt } from '../lib/loc.mjs';
 
 export const ids = ['P-561'];
 
-const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte']);
+// Includes .html/.htm: `register()` is frequently inlined in a <script> tag in
+// index.html rather than a separate JS file (confirmed against a real PWA starter app).
+const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte', '.html', '.htm']);
 const REGISTER_CALL = /serviceWorker\s*\.\s*register\s*\([^)]*\)/g;
 
 function hasChainedCatch(contents, afterIndex) {

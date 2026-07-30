@@ -282,7 +282,7 @@
     "symptom": "Sticky needs an unconstrained ancestor scroll context. Locking body overflow kills sticky headers, deadens mobile scroll, and makes dropdowns unreachable — three \"unrelated\" bugs from one line.",
     "correct": "Gate every scroll lock behind `matchMedia('(min-width: 768px)')` with a resize listener, or use the fixed-body + scroll-restore pattern. Never unconditional.",
     "detectNotes": "[S] grep `body.style.overflow`, `documentElement.style.overflow`, `scrollLock`, `overflow-hidden` applied to body — assert each is media-gated. This is the single highest-yield static check in the suite.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p113-body-scroll-lock.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

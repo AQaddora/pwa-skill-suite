@@ -239,6 +239,12 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** One scroll owner per screen; `overscroll-behavior: contain` on any genuinely nested scroller.
 **Detect:** Reclassified: whether nested `overflow: auto` containers are actually competing scrollers depends on rendered content overflowing at a given viewport, which source alone can't know. [R] walk the rendered DOM for nested containers that are simultaneously scrollable, and flag competing scroll owners.
 
+### P-547 · Safe-area treated as iOS-only while Android goes edge-to-edge   [P1] [S]
+**AI writes:** `env(safe-area-inset-bottom)` applied only inside an iOS-specific `@supports (-webkit-touch-callout: none)` block, or a UA/platform check gating safe-area handling to iOS only.
+**Breaks:** Android 15 enforces edge-to-edge by default and Chrome draws standalone PWA content behind the gesture navigation bar, so `env(safe-area-inset-bottom)` is now nonzero on Android too, not just iOS. A tab bar whose bottom padding is wrapped in an iOS-only feature check sits flush against, and gets partially covered by, the Android gesture bar.
+**Correct:** Apply `env(safe-area-inset-*)` unconditionally, for every platform, not gated behind an iOS-only `@supports`/UA check. Safe-area insets resolve to `0` on platforms/browsers that don't need them, so applying them everywhere is always safe.
+**Detect:** Advisory [S]: `env(safe-area-inset-` usage found exclusively inside a `-webkit-touch-callout`/iOS-UA-gated block, with no ungated usage anywhere else in the stylesheet, is a heuristic guard-scoping check — a project could legitimately have a separate, ungated safe-area rule elsewhere the scanner still sees, so a real hit is a strong signal but not a proof. Not implemented as a rule this sprint.
+
 ---
 
 # §3 · Responsive layout
@@ -482,6 +488,24 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Breaks:** Chromium-only. Must be feature-detected with a foreground fallback.
 **Correct:** Feature-detect (`'sync' in registration` / `'periodicSync' in registration`) and provide a foreground fallback.
 **Detect:** No detect method documented in the source entry. [S] flag Background/Periodic Sync API usage without a feature-detect guard. Advisory: absence-of-guard heuristic.
+
+### P-549 · `new Notification()` throws on Chrome Android; push plumbing incomplete   [P1] [S]
+**AI writes:** `new Notification(title, opts)` called directly from page/app code (works on desktop Chrome, throws on Android).
+**Breaks:** Chrome on Android throws `TypeError: Failed to construct 'Notification'` for the page-context `Notification` constructor — notifications must go through `registration.showNotification()` in the service worker instead. Separately, a `notificationclick` handler that doesn't call `clients.matchAll()` and `focus()`/`openWindow()` on an existing client opens a new browser tab next to the installed app instead of focusing it, and with no `pushsubscriptionchange` listener a routine subscription-key rotation silently and permanently stops push delivery.
+**Correct:** Always request/show notifications via `registration.showNotification()`, never `new Notification()`. In `notificationclick`, call `clients.matchAll({ type: 'window' })` and focus an existing client before falling back to `clients.openWindow()`. Register a `pushsubscriptionchange` listener that re-subscribes and posts the new subscription to the backend.
+**Detect:** [S]: `new Notification(` called anywhere is a precise, deterministic pattern match — the correct API (`registration.showNotification`) has a different name, so there is no ambiguity to average out.
+
+### P-560 · One bad URL in the precache = the SW never installs, silently   [P0] [S]
+**AI writes:** `cache.addAll([...])` in the SW `install` handler listing a precache manifest that includes a URL not actually produced by the current build (a renamed/removed asset, a stale hardcoded path).
+**Breaks:** `cache.addAll()` is atomic — if a single URL in the list 404s, the entire `Promise` rejects, `install` fails, and the service worker never activates. There's no error surfaced to a user or, usually, to any monitoring: the app just quietly never gets offline support or the update flow. This is the most common way "we added a PWA" ships as, in practice, not a PWA at all.
+**Correct:** Generate the precache list from the actual build output (a manifest plugin, not a hand-maintained array) so it can never reference a URL the build didn't produce, and wrap `cache.addAll` so install failures are surfaced (logged to an error-reporting sink), not swallowed.
+**Detect:** Advisory [S]: cross-referencing a `cache.addAll([...])` literal array in a service-worker file against the actual files present in a discoverable build-output directory (`dist`/`build`/`public`/`out`) is a real static check, but depends on the build having already run and its output directory being discoverable — ships `advisory` and only fires when such a directory is found.
+
+### P-561 · SW registration failure swallowed; SPA rewrite serves HTML as `sw.js`   [P0] [S]
+**AI writes:** `navigator.serviceWorker.register('/sw.js')` called with no `.catch()` and not inside a `try`/`await`/`catch`.
+**Breaks:** A catch-all SPA rewrite rule that answers every unmatched path with `index.html` will, after any route/path change, also answer `/sw.js` with HTML instead of the actual script. The browser rejects registration because the response's MIME type isn't a script — and with no `.catch()` on `register()`, that rejection is swallowed completely, silently, in production only.
+**Correct:** Always attach a `.catch()` (or wrap in `try`/`catch` around an `await`ed call) to `serviceWorker.register()` and report the failure to an error-reporting sink. Exclude `/sw.js` (and other well-known static paths) from the SPA catch-all rewrite at the hosting/server config layer.
+**Detect:** [S]: `serviceWorker.register(` called with no `.catch(` chained and no enclosing awaited `try`/`catch` is a precise, mechanical presence/absence check within the same statement.
 
 ---
 
@@ -791,6 +815,12 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** Use theme tokens/CSS custom properties for all colour values instead of hardcoded hex, so every consumer picks up both light and dark variants automatically.
 **Detect:** No detect method documented in the source entry. [S] grep hex colour literals in component/style source outside the token definitions themselves. Advisory: real risk of false positives from legitimate one-off hex (brand colours, gradients, third-party palettes).
 
+### P-548 · Forced dark mode rewrites the brand   [P2] [S]
+**AI writes:** No `color-scheme` meta tag and no `prefers-color-scheme: dark` styles anywhere in the app — a light-only design with no declared color-scheme support.
+**Breaks:** Chrome's Auto Dark Mode on Android and Samsung Internet's dark mode both algorithmically invert/darken pages that don't declare their own dark-mode support, rewriting brand colors, images, and contrast in ways no designer approved.
+**Correct:** Declare `<meta name="color-scheme" content="light dark">` and ship a real, designed dark theme (`prefers-color-scheme: dark` / a `[data-theme=dark]` variant). A page that declares its own color-scheme support is exempted from the browser's algorithmic dark rewrite.
+**Detect:** Advisory [S]: absence of a `color-scheme` meta tag *and* absence of any dark-mode-aware styling is a reasonable static signal, but a project could legitimately inject the tag from JS, so this stays `advisory`. Related to but distinct from P-1002 (missing `color-scheme` declaration in general) — this entry is specifically about the forced-rewrite consequence on Android/Samsung Internet. Not implemented as a standalone rule this sprint.
+
 ---
 
 # §11 · Build, deploy & platform config
@@ -820,9 +850,146 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** Publish a correct `.well-known/assetlinks.json` linking the TWA package to the site, only relevant when shipping via TWA.
 **Detect:** No detect method documented in the source entry. [S] check for presence and correctness of `.well-known/assetlinks.json` when a TWA/Android wrapper is present.
 
+### P-562 · Deep-route refresh 404s   [P0] [S]
+**AI writes:** A static-hosting config (`vercel.json`, `netlify.toml`, `_redirects`, `nginx.conf`, or none at all) with no catch-all rewrite to `index.html` for client-side routes.
+**Breaks:** The installed app's cold start after an OS eviction lands on whatever deep route it was last showing — `/orders/123` — not the root. Existing catalog coverage (P-402) only verifies the manifest's `start_url`; it says nothing about whether the actual URL the app resumes on survives a hard reload. On static hosting without a rewrite, that deep-route reload 404s outright.
+**Correct:** Configure a catch-all rewrite to `index.html` for all client-side routes on whatever static host is in use (Vercel/Netlify `rewrites`, an `_redirects` file, nginx `try_files`), and verify it by actually reloading a deep route, not just the root.
+**Detect:** Advisory [S]: detecting a client-side router (React Router / Vue Router / etc.) in the source while finding no recognized catch-all rewrite in any known hosting-config file format is a real but incomplete signal — some hosts handle this without a config file the scanner recognizes. Not implemented as a rule this sprint.
+
 ---
 
-# §12 · What agents never test (the meta-failures)
+# §12 · Identity, auth & OAuth
+
+### P-540 · Safari session does not transfer to the installed app   [P0] [D]
+**AI writes:** Auth flow assumes the browser session persists into the installed app; no explicit re-auth/session-bridge step on first launch.
+**Breaks:** An iOS home-screen app gets its own separate data store from Safari — cookies, localStorage, and IndexedDB written during the Safari session do not carry over. A user who logs in on the web, then installs and taps the icon, opens the app already logged out. If the app also tries to complete an OAuth round-trip through an out-of-scope link (which opens in a Safari-cookie-jar sheet, not the app's own store), the IdP session lands in the wrong storage and the redirect re-enters the app still unauthenticated — an infinite login loop that reproduces on zero emulators, because emulators don't model iOS's separate per-context storage partitions.
+**Correct:** Treat first launch of the installed app as a cold session with no assumed prior auth state. Make first-run auth cheap: OTP, magic link, or passkey rather than a heavy re-login form. Keep the entire auth flow same-origin and in-scope of the manifest so it runs inside the installed app's own storage partition, never inside an out-of-scope Safari sheet.
+**Detect:** Device-only: the storage partition split between Safari and an installed home-screen web app, and the sheet-vs-app cookie jar boundary, only exist on a real iOS device/simulator running the actual WebKit install pipeline — no static or CI-runtime signal reproduces it. [D] real-device verification: log in in Safari, install, relaunch from the home screen, and assert the session is gone.
+
+### P-541 · Popup-based OAuth is structurally broken on mobile/standalone   [P0] [S]
+**AI writes:** `window.open(idpUrl, ...)` or `signInWithPopup(auth, provider)` called inside an async click handler, often after an earlier `await`.
+**Breaks:** `window.open` called after an `await` loses transient activation on mobile browsers and silently returns `null` instead of opening a window. Even when a popup does open, `Cross-Origin-Opener-Policy: same-origin` (the default on most modern IdPs and increasingly the app's own origin) severs `window.opener`, so the popup can never `postMessage` a token back to the opener — the flow hangs forever waiting on a channel that cannot exist. In standalone display mode there may be no popup surface at all.
+**Correct:** Use redirect-mode OAuth (`signInWithRedirect`, a full-page `location.href` navigation to the authorization endpoint) with a same-origin, in-scope return URL. Never gate the identity round-trip on a popup window surviving a cross-origin-opener boundary.
+**Detect:** [S] genuinely statically decidable: flag `window.open(` or `signInWithPopup(` calls reachable after an `await` expression within the same async function body — the transient-activation loss is a syntactic property of the handler, not a runtime one.
+
+### P-542 · Manifest `scope` cannot span origins   [P1] [S]
+**AI writes:** An OAuth/SSO redirect or IdP base URL (`https://auth.example.com/...`, `https://accounts.google.com/...`) hardcoded in the app while `manifest.json`'s `scope`/`start_url` is `https://app.example.com/`.
+**Breaks:** `scope` is same-origin by spec. Every SSO bounce to an identity provider's own subdomain or origin — `auth.example.com`, `accounts.google.com` — takes navigation out of the manifest's scope. Depending on the platform this either exits standalone display mode (the chrome/URL bar reappears mid-login) or spawns a new out-of-scope browsing context whose storage partition the installed app can never read from again (see P-540).
+**Correct:** Keep the entire auth surface, including the IdP redirect, on the same origin as the manifest's `scope` — proxy or same-origin-mount the identity provider rather than sending users to its own domain — or accept and design for the display-mode drop explicitly.
+**Detect:** Advisory [S]: diff hostnames found in OAuth/redirect-URI-shaped string literals (`redirect_uri`, `authorize?`, known IdP domains) against the manifest's `scope`/`start_url` origin — a real signal, but string literals can be environment-templated or assembled at runtime, so this is a heuristic, not a proof. Not implemented as a rule this sprint.
+
+### P-543 · No multi-client session coordination   [P1] [R]
+**AI writes:** A single in-memory or localStorage auth token with no cross-tab/cross-client channel; refresh-token rotation triggered independently by whichever client's access token expires first.
+**Breaks:** The installed window and a browser tab are two live, independent clients. Logging out in one leaves the other authenticated and calling APIs with a dead session. Worse, if the backend rotates the refresh token on use, two clients racing a refresh at the same time invalidate each other's token family — both get logged out simultaneously, which reads to support as a random backend outage, not a client concurrency bug.
+**Correct:** Propagate logout across clients with `BroadcastChannel` (or a storage event) so every open client ends its session together. Serialize refresh-token rotation with `navigator.locks.request()` so only one client in the origin performs a given refresh at a time.
+**Detect:** [R]: no static signal distinguishes a coordinated multi-client auth setup from an uncoordinated one from source alone — this needs a runtime assertion (open two clients, log out in one, assert the other's next authenticated call fails). No fixture-based static rule is planned this sprint.
+
+---
+
+# §13 · In-app browsers
+
+### P-544 · No in-app browser detection (Instagram/Facebook/TikTok/LINE)   [P0] [S]
+**AI writes:** No user-agent branch for in-app WebViews anywhere in the app; install CTAs, `beforeinstallprompt` handling, and Google OAuth buttons render unconditionally for every visitor.
+**Breaks:** For a consumer app the majority of first visits from social traffic arrive through an in-app WebView (Instagram, Facebook, TikTok, LINE), not a real browser. These WebViews never fire `beforeinstallprompt` and have no Add-to-Home-Screen affordance at all, use ephemeral storage that's wiped when the host app is swiped away, break `window.open`, and Google's OAuth endpoint hard-rejects them with `403 disallowed_useragent`. The funnel's first mile dead-ends silently and nobody on the dev team, browsing from a real browser, ever reproduces it.
+**Correct:** Detect known in-app WebView user agents (`FBAN|FBAV|Instagram|Line|TikTok`) and brand the experience accordingly: hide install CTAs that cannot work, and gate any Google/OAuth login behind an explicit "Open in browser" affordance instead of letting it hard-fail.
+**Detect:** Advisory [S]: absence of an in-app-browser UA branch anywhere in a file that also triggers an install prompt or OAuth sign-in is a heuristic signal — a codebase can legitimately handle this server-side or in a file the scanner isn't looking at, so this ships as `advisory`, not `high`, to keep the false-positive rate down.
+
+### P-545 · Install instructions assume Safari's UI   [P1] [S]
+**AI writes:** Onboarding copy or an install-instructions component hardcoding "tap the Share icon, then Add to Home Screen" as the only iOS install path.
+**Breaks:** Since iOS 16.4, Chrome, Firefox, and Edge on iOS can install a PWA too — through their own, different menus, not Safari's Share sheet. An install-instructions UI that only describes Safari's UI is simply wrong for any visitor on CriOS/FxiOS/EdgiOS.
+**Correct:** Branch install instructions on the actual browser UA, not just "iOS vs not" — Safari's Share-sheet copy for Safari, each browser's own menu path for CriOS/FxiOS/EdgiOS, and a WebView-appropriate message (see P-544) for in-app browsers.
+**Detect:** Advisory [S]: grep install-instruction copy for Safari-specific UI strings ("Share icon", "Add to Home Screen" as the sole instruction) unguarded by any non-Safari iOS UA branch — a wording heuristic, not a proof the copy is wrong for every browser. Not implemented as a rule this sprint.
+
+### P-546 · Link capturing assumed to exist   [P1]
+**Breaks:** iOS never opens an installed PWA from a tapped link — the link always opens in Safari, full stop. Android only opens the installed app for a link if the site has verified Digital Asset Links to that exact origin, and only for links matching the manifest's declared scope. Agents routinely promise "deep links open the app" and ship nothing that makes that true on either platform.
+**Correct:** Do not promise link-to-app deep linking without shipping the platform-specific plumbing it requires: Android needs a verified `assetlinks.json` and matching manifest scope; iOS has no equivalent at all for PWAs, and any "deep link" promise there must instead mean a normal web link with app-aware in-page routing, not launching the installed app.
+**Detect:** Documented gap — no automated check. Whether link capturing is wired up (Digital Asset Links file, matching scope) is a deploy/config-verification concern, not a source-scannable one, and is process/documentation guidance more than a bug pattern with a fixture.
+
+---
+
+# §14 · Permissions
+
+### P-550 · Permission requested on load, denied state never handled   [P1] [S]
+**AI writes:** `Notification.requestPermission()` or `navigator.geolocation.getCurrentPosition()` called inside a `useEffect`/mount lifecycle hook with no branch for a `denied` result.
+**Breaks:** Chrome's quieter permission UI suppresses prompts triggered without a user gesture, and once a user clicks "Block" the decision is permanent — no API can re-prompt them. A component that requests permission on mount and only renders the granted-state UI shows nothing, forever, the instant a user denies once.
+**Correct:** Request permission in-context, after a user gesture, with a rationale for why it's being asked. Read current state via the Permissions API (`navigator.permissions.query`) and render a real three-state UX: not-yet-asked, granted, and denied (with a recovery path, not a blank screen).
+**Detect:** Advisory [S]: `requestPermission()`/`getCurrentPosition()` called inside a `useEffect`/`onMounted`/lifecycle-hook body with no adjacent `denied`-branch handling is a heuristic — a mount effect could legitimately just be reading already-granted state. Not implemented as a rule this sprint.
+
+### P-551 · iOS permissions are per-session   [P2] [D]
+**AI writes:** A camera/mic permission-request flow gated on a one-time `hasAskedPermission` flag set during onboarding, assumed to hold for the life of the install (the Chrome/Android mental model).
+**Breaks:** iOS Safari (and installed home-screen apps) re-prompt for camera/microphone access every browsing session, not once ever. A "we already asked at onboarding, never ask again" flow built on the Chrome mental model surprises users with an unexpected permission prompt mid-critical-flow on iOS, because the app assumed a permission grant that had already silently expired.
+**Correct:** Treat camera/mic permission as potentially stale on iOS every session: check current grant state before relying on it, and design the UI to tolerate a permission prompt appearing at any point in a flow, not only at onboarding.
+**Detect:** [D]: whether iOS scopes a given permission to the browsing session is a WebKit platform fact that only reproduces on real iOS — no static signal or CI runtime distinguishes a permission-caching bug from correct per-session-aware handling.
+
+### P-552 · Wake lock never re-acquired   [P2] [S]
+**AI writes:** `navigator.wakeLock.request('screen')` called once, at mount, with no `visibilitychange` listener to re-request it.
+**Breaks:** The OS releases a wake lock automatically whenever the tab/app is hidden. A wake lock requested once at mount and never re-acquired means the screen sleeps after the very first app-switch, even though the feature that needed it (a workout timer, a QR display, a video call) is still active.
+**Correct:** Re-request the wake lock on every `visibilitychange` transition back to `'visible'` while the feature that needs it is still active, not just once at mount.
+**Detect:** [S]: `wakeLock.request(` present in a file with no `visibilitychange` listener anywhere in the same file is a precise, mechanical presence/absence check.
+
+---
+
+# §15 · Media
+
+### P-553 · Autoplay policy and `playsinline`   [P1] [S]
+**AI writes:** `<video autoplay>` without both `muted` and `playsinline` attributes; an un-awaited `videoEl.play()` call with no `.catch()`.
+**Breaks:** On iPhone, a `<video>` without `playsinline` hijacks into the fullscreen native player the instant it plays, instantly breaking the installed-app illusion. Separately, browsers block autoplay of unmuted video outright; an un-awaited `.play()` call on a blocked video rejects into an unhandled promise rejection.
+**Correct:** Always pair `autoplay` with both `muted` and `playsinline`. Treat `.play()` as a promise: `await` it or attach `.catch()` so a browser-blocked autoplay fails silently instead of throwing an unhandled rejection.
+**Detect:** [S]: a `<video>` tag carrying `autoplay` without both `muted` and `playsinline` attributes is a precise markup check. An un-awaited, uncaught `.play()` call on the same line is a mechanical call-site pattern.
+
+### P-554 · Audio session ignored   [P1] [S]
+**AI writes:** `new AudioContext()` created at module load / component mount and used immediately, with no `resume()` call inside a user-gesture handler; no `navigator.mediaSession` metadata set anywhere.
+**Breaks:** An `AudioContext` created outside a user gesture starts `suspended` on mobile browsers and never produces sound until something calls `resume()` from inside a real user gesture — a silent audio feature that looks broken, not blocked. With no `navigator.mediaSession` metadata, playing audio gets no lock-screen/notification-shade transport controls either.
+**Correct:** Call `audioContext.resume()` from inside the click/tap handler that starts playback, not at load time. Set `navigator.mediaSession.metadata` and the play/pause/seek action handlers so background audio gets real system transport controls.
+**Detect:** Advisory [S]: `new AudioContext(` present with no `.resume()` call anywhere in the reachable module, and no `navigator.mediaSession` reference anywhere in the app, are presence/absence heuristics — a `.resume()` call can legitimately live in a shared audio-init utility outside the file the scanner sees. Not implemented as a rule this sprint.
+
+### P-555 · `getUserMedia` stream lifecycle unmanaged   [P1] [S]
+**AI writes:** `navigator.mediaDevices.getUserMedia(...)` assigned to a `<video>` element with no `track.stop()` call in any cleanup/unmount path.
+**Breaks:** Camera/mic tracks end on their own when the app backgrounds on mobile, so the app resumes to a frozen `<video>` bound to a dead stream with no visible error. Forgetting to call `track.stop()` on unmount leaves every track in the stream live — the OS's camera/mic-in-use indicator stays lit after the user has left the feature, and users reasonably read a lingering camera light as spyware.
+**Correct:** Call `.stop()` on every track of a `getUserMedia` stream in the component's cleanup/unmount path. Listen for `track.onended` (or `visibilitychange`) and re-acquire or show a clear "camera paused" state instead of leaving a dead stream bound to the video element.
+**Detect:** Advisory [S]: `getUserMedia(` called with no `.stop()` call on any track anywhere in the same file is a presence/absence heuristic — cleanup can legitimately be centralized in a shared hook/utility outside the file the scanner sees. Not implemented as a rule this sprint.
+
+---
+
+# §16 · Lifecycle & realtime
+
+### P-556 · WebSocket/SSE die on background; no reconnect; `ws://` hardcoded   [P0] [S]
+**AI writes:** `new WebSocket('ws://...')` opened once at module scope, with no `onclose`/`onerror` reconnect logic, no backoff, and no resubscribe step after reconnecting.
+**Breaks:** iOS kills open sockets almost immediately once the app is backgrounded/locked. A socket opened once with no `onclose` handler that reconnects just stays dead forever after the first app-switch. Separately, a literal `ws://` URL is blocked as mixed content on an `https://` page — it works in local dev over `http://localhost` and is dead on arrival in production.
+**Correct:** Use `wss://` unconditionally in any non-localhost build. Reconnect from `onclose`/`onerror` with exponential backoff, and re-send whatever subscribe/join messages the connection needs on every reconnect, not just on first connect.
+**Detect:** [S]: a literal `ws://` (not `wss://`, not `localhost`/`127.0.0.1`) string is a precise, mechanical match — a one-line static rule catching a guaranteed prod outage. `new WebSocket(` present with no `onclose` handler anywhere in the same file is a presence/absence heuristic (reconnect logic can live in a shared wrapper the scanner doesn't see); the combined rule ships `advisory` to keep the false-positive rate down.
+
+### P-557 · No refetch on resume; background timer throttling ignored   [P1] [R]
+**AI writes:** Data fetched once on mount with no `visibilitychange`/`focus` listener to refetch; a `setInterval` polling loop assumed to keep firing on schedule while backgrounded.
+**Breaks:** An installed app resumed after being backgrounded for hours or days shows whatever it last fetched, presented with total confidence, because nothing ever asked for fresh data on resume. Mobile browsers also throttle or fully suspend `setInterval` timers in background tabs, so a polling loop that assumes it kept firing on schedule has actually been silently starved. This is the single most-felt "this app is broken" moment for real users.
+**Correct:** Refetch on `visibilitychange` → `'visible'` (or `focus`), not just on mount. Don't rely on `setInterval` firing on schedule across a background period — recompute what's stale and catch up on resume instead of trusting the timer's tick count.
+**Detect:** [R]: whether data actually goes stale after a background period is an observed runtime behavior (mount, background the page, wait, foreground, assert a refetch happened) — no static source signal proves an app does the right thing, only flags the absence of an obvious resume listener, too weak a signal to ship as a standalone static rule this sprint.
+
+### P-558 · `beforeunload` used for save/flush — never fires on iOS   [P1] [S]
+**AI writes:** `window.addEventListener('beforeunload', saveHandler)` (or `'unload'`) used to flush unsaved state or send a final analytics beacon, with no `pagehide`/`visibilitychange` fallback.
+**Breaks:** Mobile Safari backgrounds-then-evicts a page without ever firing `beforeunload`/`unload` — any save-on-exit logic that depends on it simply never runs, silently dropping unsaved work. Even where it does fire, `beforeunload` disables the back/forward cache (bfcache) on browsers that support it.
+**Correct:** Flush/save on `pagehide` and on `visibilitychange` transitioning to `'hidden'` — both fire reliably on iOS backgrounding — and send the payload with `navigator.sendBeacon()` or `fetch(..., { keepalive: true })` so it survives the page tearing down.
+**Detect:** [S]: `addEventListener('beforeunload'` or `addEventListener('unload'` present in a file with no matching `addEventListener('pagehide'` anywhere in the same file is a precise presence/absence check.
+
+### P-559 · Offline mutation loss   [P1] [R]
+**AI writes:** A form `onSubmit` that `POST`s directly and clears/resets the form on submit, with no offline branch — a failed fetch just rejects and the already-cleared form loses the user's input.
+**Breaks:** A POST made while offline fails outright, but the form was already optimistically cleared — the data the user just typed is simply gone, with no record it ever existed. An offline-capable app that can read cached data but silently loses writes is worse for trust than an app that never claimed to work offline at all.
+**Correct:** Queue failed/offline mutations in an IndexedDB outbox with an idempotency key per mutation, replay the outbox on reconnect (`online` event or Background Sync), and don't clear the form/optimistic UI until the write is actually confirmed to have gone through.
+**Detect:** [R]: whether a mutation is durably queued when offline versus silently dropped is a behavioral property (go offline, submit, come back online, assert the write eventually lands) no static source signal can distinguish reliably — a form that clears on submit is common and correct when paired with an outbox the scanner can't see. Not implemented as a rule this sprint.
+
+---
+
+# §17 · Observability & error reporting
+
+### P-563 · No error boundary, no global handlers, no reporting   [P0] [S]
+**AI writes:** A React/Vue/Svelte app tree with no ErrorBoundary/`errorCaptured`/`onErrorCaptured`/`handleError` anywhere, no `window.onerror` or `window.addEventListener('error', ...)`, no `unhandledrejection` listener, and no call to any error-reporting SDK.
+**Breaks:** In an installed PWA a crash is a white screen with no URL bar and no devtools. Without an error boundary, one component throw takes down the entire app tree; without global `window.onerror`/`unhandledrejection` handlers and a reporting sink, that crash generates zero telemetry anywhere. Every other P0 in this catalog becomes effectively undiagnosable in production without this.
+**Correct:** Wrap the app tree in a real error boundary that renders a recovery UI instead of a blank screen. Add `window.addEventListener('error', ...)` and `window.addEventListener('unhandledrejection', ...)` globally, and wire all three (boundary + both global handlers) to an actual reporting sink, not just `console.error`.
+**Detect:** [S]: anchored at the app's bootstrap call (`ReactDOM.createRoot`/`.render`, `createApp`, `.mount(`), the rule scans every source file in the project for an error-boundary construct, global `error`/`unhandledrejection` listeners, and a recognizable reporting-SDK reference — three independent, mechanical presence/absence checks across the whole source tree, not just the bootstrap file itself.
+
+---
+
+# §18 · What agents never test (the meta-failures)
 
 ### P-1201 · Never opened on a real device — emulation passes, iOS fails   [P1] [D]
 **Breaks:** Never opened on a real device — emulation passes, iOS fails.
@@ -881,27 +1048,33 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 | § | area | entries | P0 |
 |---|---|---|---|
 | 1 | iOS Safari & WebKit | 25 | 4 |
-| 2 | App shell & navigation | 10 | 3 |
+| 2 | App shell & navigation | 11 | 3 |
 | 3 | Responsive layout | 10 | 1 |
 | 4 | Manifest, install & icons | 17 | 7 |
-| 5 | Service worker, caching & updates | 19 | 8 |
+| 5 | Service worker, caching & updates | 22 | 10 |
 | 5b | Version skew & stale client state | 12 | 5 |
 | 6 | Performance on real phones | 11 | 0 |
 | 7 | Accessibility | 12 | 1 |
 | 8 | RTL & internationalisation | 8 | 1 |
 | 9 | Forms & the mobile keyboard | 8 | 0 |
-| 10 | Theming & system integration | 5 | 0 |
-| 11 | Build, deploy & platform config | 5 | 2 |
-| 12 | What agents never test (the meta-failures) | 10 | 0 |
-| | **total** | **152** | **32** |
+| 10 | Theming & system integration | 6 | 0 |
+| 11 | Build, deploy & platform config | 6 | 3 |
+| 12 | Identity, auth & OAuth | 4 | 2 |
+| 13 | In-app browsers | 3 | 1 |
+| 14 | Permissions | 3 | 0 |
+| 15 | Media | 3 | 0 |
+| 16 | Lifecycle & realtime | 4 | 1 |
+| 17 | Observability & error reporting | 1 | 1 |
+| 18 | What agents never test (the meta-failures) | 10 | 0 |
+| | **total** | **176** | **40** |
 
 
 
 **Detection feasibility**
 
-- **~61%** are catchable **statically** — no browser needed, runs on every save.
-- **~37%** need a **runtime** browser assertion.
-- **~5%** are **device-only** and must be reported as `UNVERIFIED`, never as passing.
+- **~63%** are catchable **statically** — no browser needed, runs on every save.
+- **~34%** need a **runtime** browser assertion.
+- **~6%** are **device-only** and must be reported as `UNVERIFIED`, never as passing.
 
 
 

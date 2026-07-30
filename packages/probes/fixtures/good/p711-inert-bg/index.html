@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { margin: 0; font-family: system-ui; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000;
+             display: none; } .overlay.open { display: block; }
+  .sheet { background: #fff; padding: 24px; }
+</style></head>
+<body>
+  <div id="bg-content" data-pwa-role="shell">
+    <button id="open" data-pwa-role="overlayTrigger">Open</button>
+    <button id="bg-btn">Background action</button>
+  </div>
+  <div class="overlay" role="dialog" aria-modal="true" data-pwa-role="overlay" id="ov">
+    <div class="sheet">Sheet <button id="close" data-pwa-role="overlayCloseVia">Close</button></div>
+  </div>
+  <script>
+    const ov = document.getElementById('ov');
+    const bg = document.getElementById('bg-content');
+    document.getElementById('open').onclick = () => {
+      ov.classList.add('open');
+      bg.setAttribute('inert', '');
+      bg.setAttribute('aria-hidden', 'true');
+    };
+    document.getElementById('close').onclick = () => {
+      ov.classList.remove('open');
+      bg.removeAttribute('inert');
+      bg.removeAttribute('aria-hidden');
+    };
+  </script>
+</body></html>

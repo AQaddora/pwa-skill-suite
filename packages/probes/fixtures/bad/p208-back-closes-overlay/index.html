@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" /><title>back-overlay-bad</title>
+<style>.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none}.overlay.open{display:block}</style></head>
+<body>
+  <button id="open" data-pwa-role="overlayTrigger">Open</button>
+  <div class="overlay" role="dialog" aria-modal="true" data-pwa-role="overlay" id="ov">
+    <button id="close" data-pwa-role="overlayCloseVia">Close</button>
+  </div>
+  <script>
+    const ov = document.getElementById('ov');
+    // Overlay is not wired into history — hardware/gesture back cannot close it.
+    document.getElementById('open').onclick = () => ov.classList.add('open');
+    document.getElementById('close').onclick = () => ov.classList.remove('open');
+  </script>
+</body></html>

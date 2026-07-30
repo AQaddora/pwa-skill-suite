@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" /><title>standalone-back-good</title></head>
+<body>
+  <header id="header"></header>
+  <main id="view"></main>
+  <script>
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const deep = location.pathname !== '/';
+    const header = document.getElementById('header');
+    // In standalone there is no browser back button, so a deep route provides its own.
+    if (standalone && deep) {
+      const btn = document.createElement('button');
+      btn.id = 'app-back';
+      btn.setAttribute('data-pwa-role', 'back');
+      btn.setAttribute('aria-label', 'Back');
+      btn.textContent = '‹ Back';
+      btn.onclick = () => history.back();
+      header.appendChild(btn);
+    }
+    document.getElementById('view').textContent = 'route: ' + location.pathname;
+  </script>
+</body></html>

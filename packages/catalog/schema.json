@@ -95,7 +95,7 @@
         "type": ["string", "null"]
       },
       "probe": {
-        "type": "null"
+        "type": ["string", "null"]
       },
       "verified": {
         "type": "object",

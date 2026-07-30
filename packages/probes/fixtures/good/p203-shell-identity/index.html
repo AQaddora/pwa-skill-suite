@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" /><title>shell-good</title></head>
+<body>
+  <div data-pwa-role="shell" id="shell">
+    <nav><a href="/">Home</a> · <a href="/two">Two</a></nav>
+    <main id="view"></main>
+  </div>
+  <script>
+    const view = document.getElementById('view');
+    function render() { view.textContent = 'route: ' + location.pathname; }
+    render();
+    // SPA: intercept in-app links and swap only the view — the shell node persists.
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (a && new URL(a.href).origin === location.origin) {
+        e.preventDefault();
+        history.pushState({}, '', a.getAttribute('href'));
+        render();
+      }
+    });
+    window.addEventListener('popstate', render);
+  </script>
+</body></html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" /><title>scroll-good</title>
+<style>html,body{margin:0} #scroller{height:200px;overflow:auto}</style></head>
+<body>
+  <div data-pwa-role="shell">
+    <nav><a href="/">Home</a> · <a href="/two">Two</a></nav>
+    <div data-pwa-role="scroller" id="scroller"><div style="height:1500px">tall content</div></div>
+  </div>
+  <script>
+    const scroller = document.getElementById('scroller');
+    const positions = {};
+    let current = location.pathname;
+    function enter() { current = location.pathname; scroller.scrollTop = positions[current] || 0; }
+    function leave() { positions[current] = scroller.scrollTop; }
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (a && new URL(a.href).origin === location.origin) {
+        e.preventDefault();
+        leave();
+        history.pushState({}, '', a.getAttribute('href'));
+        enter();
+      }
+    });
+    window.addEventListener('popstate', enter); // restores the destination tab's saved scroll
+  </script>
+</body></html>

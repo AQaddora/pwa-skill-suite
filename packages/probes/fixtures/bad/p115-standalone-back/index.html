@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" /><title>standalone-back-bad</title></head>
+<body>
+  <header id="header"><h1>Detail</h1></header>
+  <main id="view"></main>
+  <script>
+    // Deep route in standalone, but no in-app back affordance is ever rendered.
+    document.getElementById('view').textContent = 'route: ' + location.pathname;
+  </script>
+</body></html>

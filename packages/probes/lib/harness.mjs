@@ -87,9 +87,15 @@ export function createHarness({ config, engines }) {
     if (displayMode === 'standalone') await context.addInitScript(standaloneShim);
     const page = await context.newPage();
     const url = new URL(route, config.baseURL).href;
-    await page.goto(url, { waitUntil: 'load' });
+    let response = null;
+    try {
+      response = await page.goto(url, { waitUntil: 'load' });
+    } catch {
+      response = null; // navigation aborted/timed out — ok, an unresolved-status caller sees null
+    }
     if (rtl) await page.evaluate(() => document.documentElement.setAttribute('dir', 'rtl'));
-    return { page, context, close: () => context.close() };
+    const ok = response !== null && response.status() < 400;
+    return { page, context, ok, close: () => context.close() };
   }
 
   async function closeAll() {

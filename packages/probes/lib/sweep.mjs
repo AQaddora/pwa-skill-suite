@@ -22,10 +22,15 @@ import { aggregate } from './outcome.mjs';
 export async function elementSweep(harness, { id, cells, collect, deviceOnly = false, originOnly = false, authenticated = false, detail = '', reproduction }) {
   const routes = harness.config.routes;
   const findings = [];
+  let navigationOk = true;
   for (const cell of cells) {
     for (const route of routes) {
-      const { page, close } = await harness.openPage({ ...cell, route, authenticated });
+      const { page, close, ok } = await harness.openPage({ ...cell, route, authenticated });
       try {
+        if (!ok) {
+          navigationOk = false;
+          continue; // page didn't really load — evaluating its DOM would launder a broken route into a false PASS
+        }
         await installUtils(page);
         const violations = await page.evaluate(collect);
         for (const v of violations) {
@@ -41,9 +46,11 @@ export async function elementSweep(harness, { id, cells, collect, deviceOnly = f
     deviceOnly,
     originOnly,
     targetIsLocal: harness.config.targetIsLocal,
-    resolved: true,
+    resolved: navigationOk,
     reproduction,
-    detail: detail || `swept ${[...cells].length} cell(s) × ${routes.length} route(s)`,
+    detail: navigationOk
+      ? detail || `swept ${[...cells].length} cell(s) × ${routes.length} route(s)`
+      : `navigation failed for one or more routes (checked ${routes.join(', ')}) — cannot trust an empty sweep`,
   });
 }
 

@@ -17,3 +17,11 @@ test('P-301 PASSes on a fully responsive page', async () => {
   assert.equal(res.outcome, 'PASS');
   assert.equal(res.findings.length, 0);
 });
+
+test('P-301 reports BLOCKED, never PASS, when the configured route 404s', async () => {
+  const res = await runProbeAgainst(probe, fixturePath('good', 'p301-overflow'), {
+    routes: ['/definitely-missing.html'],
+  });
+  assert.equal(res.outcome, 'BLOCKED');
+  assert.equal(res.findings.length, 0);
+});

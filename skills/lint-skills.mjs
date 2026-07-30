@@ -16,7 +16,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = __dirname;
 const catalogPath = path.resolve(__dirname, '..', 'packages', 'catalog', 'catalog.json');
 
-const ID_RE = /P-\d{3}/g;
+// Catalog IDs are P-### or P-#### (e.g. P-101, P-1001). Match greedily so the
+// leading three digits of a four-digit ID aren't mistaken for a 3-digit ID.
+const ID_RE = /\bP-\d{3,4}\b/g;
 // One double- or single-quoted phrase of at least three characters.
 const TRIGGER_RE = /["“']([^"“”']{3,})["”']/;
 

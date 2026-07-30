@@ -51,7 +51,7 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 # §1 · iOS Safari & WebKit
 
 ### P-101 · Input focus zooms the whole page   [P1] [R][D]
-**AI writes:** <input class="text-sm">` / `font-size: 14px` on form controls.
+**AI writes:** `<input class="text-sm">` / `font-size: 14px` on form controls.
 **Breaks:** iOS Safari auto-zooms any focused control whose computed font-size < 16px, then never zooms back. The app instantly reads as a website.
 **Correct:** Computed font-size >= 16px on every input, select, textarea. If the design needs smaller text, shrink with padding/line-height, not font-size. Do not fix this by disabling zoom (see P-701).
 **Detect:** Reclassified: computed font-size cannot be read from source alone (Tailwind/CSS cascade + inheritance resolve it at render time). Phase 2 will implement this as a computed-style/DOM sweep: focus each control, assert visualViewport.scale === 1, and read computed font-size directly. [D] real iOS confirm.

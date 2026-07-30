@@ -4,6 +4,11 @@
 // Returns [{ property, value, line, column, selector }].
 
 export function extractDeclarations(contents) {
+  // Blank out block comments (a comment may contain `:`/`;`/`{` that would otherwise
+  // corrupt the selector/property/value split). Replace non-newline chars with spaces so
+  // every remaining character keeps its original index for line/column reporting.
+  contents = contents.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+
   const out = [];
   const selectorStack = [];
   let buf = '';

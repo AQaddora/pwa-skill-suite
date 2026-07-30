@@ -2,9 +2,22 @@
 // Scanner CLI: node cli.mjs <project-dir> [--json] [--baseline <file>] [--write-baseline]
 // Exposes runScan(dir, opts) -> { findings, surfaces } for reuse by tests and the skill.
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { walkFiles } from './lib/walk.mjs';
 import { loadRules } from './lib/registry.mjs';
 import { readBaseline, writeBaseline, filterAgainstBaseline } from './lib/baseline.mjs';
+import { buildReport } from '../report/index.mjs';
+import { renderMarkdown } from '../report/render-md.mjs';
+import { renderJson } from '../report/render-json.mjs';
+
+const CATALOG_PATH = fileURLToPath(new URL('../catalog/catalog.json', import.meta.url));
+function loadCatalog() {
+  try {
+    return JSON.parse(readFileSync(CATALOG_PATH, 'utf8'));
+  } catch {
+    return [];
+  }
+}
 
 // Heuristic surface detection: does the audited app have forms / a service worker / RTL?
 // Used by the report layer to mark whole sections N/A instead of failing them.
@@ -77,7 +90,7 @@ export async function main(argv) {
     console.error('Usage: cli.mjs <project-dir> [--json] [--baseline <file>] [--write-baseline]');
     return 1;
   }
-  let { findings } = await runScan(opts.dir);
+  let { findings, surfaces } = await runScan(opts.dir, { detectSurfaces: true });
 
   if (opts.writeBaseline && opts.baseline) {
     writeBaseline(opts.baseline, findings);
@@ -88,7 +101,14 @@ export async function main(argv) {
     findings = filterAgainstBaseline(findings, readBaseline(opts.baseline));
   }
 
-  console.log(opts.json ? JSON.stringify({ findings }, null, 2) : renderPlain(findings));
+  const catalog = loadCatalog();
+  if (catalog.length === 0) {
+    // Defensive fallback if the catalog is unreadable — never silently emit nothing.
+    console.log(opts.json ? JSON.stringify({ findings }, null, 2) : renderPlain(findings));
+    return 0;
+  }
+  const report = buildReport({ findings, catalog, surfaces });
+  console.log(opts.json ? renderJson(report) : renderMarkdown(report));
   return 0;
 }
 

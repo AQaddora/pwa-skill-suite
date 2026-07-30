@@ -27,7 +27,13 @@ const SECTIONS = [
   { id: 'forms', num: '9', title: '§9 · Forms & the mobile keyboard' },
   { id: 'theming', num: '10', title: '§10 · Theming & system integration' },
   { id: 'build-deploy', num: '11', title: '§11 · Build, deploy & platform config' },
-  { id: 'meta', num: '12', title: '§12 · What agents never test (the meta-failures)' },
+  { id: 'identity-auth', num: '12', title: '§12 · Identity, auth & OAuth' },
+  { id: 'in-app-browser', num: '13', title: '§13 · In-app browsers' },
+  { id: 'permissions', num: '14', title: '§14 · Permissions' },
+  { id: 'media', num: '15', title: '§15 · Media' },
+  { id: 'lifecycle', num: '16', title: '§16 · Lifecycle & realtime' },
+  { id: 'observability', num: '17', title: '§17 · Observability & error reporting' },
+  { id: 'meta', num: '18', title: '§18 · What agents never test (the meta-failures)' },
 ];
 
 // detect[] value -> bracket-tag letter, in the fixed display order the

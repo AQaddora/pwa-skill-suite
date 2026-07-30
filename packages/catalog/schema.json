@@ -47,6 +47,12 @@
           "forms",
           "theming",
           "build-deploy",
+          "identity-auth",
+          "in-app-browser",
+          "permissions",
+          "media",
+          "lifecycle",
+          "observability",
           "meta"
         ]
       },

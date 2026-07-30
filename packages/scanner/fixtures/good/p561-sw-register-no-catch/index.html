@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <body>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.onload = () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.error('SW registration failed', err);
+          });
+        };
+      }
+    </script>
+  </body>
+</html>

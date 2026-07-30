@@ -1424,7 +1424,7 @@
     "symptom": "The catastrophic one. Users are pinned to the old app forever; your deploys are invisible; you cannot fix it remotely because the fix itself is behind the cache.",
     "correct": "Network-first (or stale-while-revalidate with a fast timeout) for navigations; cache-first only for content-hashed immutable assets.",
     "detectNotes": "[S] classify the fetch handler's navigation strategy — reject cache-first for `request.mode === 'navigate'`. [R] deploy-B simulation (P-512). Advisory: classifying an arbitrary fetch handler's strategy is a control-flow heuristic, not a literal match.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p502-sw-navigation-strategy.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -1469,7 +1469,7 @@
     "symptom": "The inverse mistake, and agents love it as a \"fix\" for P-503. Assets swap under a live tab → the running bundle requests chunks that no longer exist → white screen mid-session.",
     "correct": "Only after user-confirmed reload, or paired with a controlled reload on `controllerchange`.",
     "detectNotes": "[S] `skipWaiting` at install-time with no reload coordination. Advisory: proving \"no reload coordination\" is an absence-of-guard heuristic across the whole SW file.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p504-skip-waiting.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",
@@ -1690,7 +1690,7 @@
     "symptom": "The CDN pins the worker itself. Users can never receive the fix.",
     "correct": "`Cache-Control: no-cache` on `sw.js` and the manifest; long immutable TTLs only on hashed assets.",
     "detectNotes": "[S] response-header assertion against the deployed origin, or against the headers config file (e.g. `vercel.json`, `netlify.toml`, `_headers`, nginx/CDN config) when checked at build time.",
-    "rule": null,
+    "rule": "packages/scanner/rules/p514-sw-cache-ttl.mjs",
     "probe": null,
     "verified": {
       "ios": "18.x",

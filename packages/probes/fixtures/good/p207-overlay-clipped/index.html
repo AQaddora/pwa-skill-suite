@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { margin: 0; font-family: system-ui; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px;
+            background: #111; color: #fff; z-index: 100; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; /* ABOVE the bar */
+             display: none; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .sheet { background: #fff; padding: 24px; }
+</style></head>
+<body>
+  <main><button id="open" data-pwa-role="overlayTrigger">Open sheet</button></main>
+  <div class="overlay" role="dialog" aria-modal="true" data-pwa-role="overlay" id="ov">
+    <div class="sheet">Sheet <button id="close" data-pwa-role="overlayCloseVia">Close</button></div>
+  </div>
+  <nav class="tabbar" data-pwa-role="tabbar">tabs</nav>
+  <script>
+    const ov = document.getElementById('ov');
+    document.getElementById('open').onclick = () => ov.classList.add('open');
+    document.getElementById('close').onclick = () => ov.classList.remove('open');
+  </script>
+</body></html>

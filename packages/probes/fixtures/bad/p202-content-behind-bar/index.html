@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { margin: 0; font-family: system-ui; }
+  main { padding: 16px; } /* no room reserved for the fixed bar */
+  .row { height: 80px; border-bottom: 1px solid #ccc; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px;
+            background: #111; color: #fff; }
+</style></head>
+<body>
+  <main id="list"></main>
+  <nav class="tabbar" data-pwa-role="tabbar">tabs</nav>
+  <script>
+    const list = document.getElementById('list');
+    for (let i = 0; i < 20; i++) {
+      const d = document.createElement('div');
+      d.className = 'row';
+      d.textContent = 'Row ' + i;
+      if (i === 19) d.id = 'last-row';
+      list.appendChild(d);
+    }
+  </script>
+</body></html>

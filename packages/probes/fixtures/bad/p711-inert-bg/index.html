@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { margin: 0; font-family: system-ui; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000;
+             display: none; } .overlay.open { display: block; }
+  .sheet { background: #fff; padding: 24px; }
+</style></head>
+<body>
+  <div id="bg-content">
+    <button id="open" data-pwa-role="overlayTrigger">Open</button>
+    <button id="bg-btn">Background action</button>
+  </div>
+  <div class="overlay" role="dialog" aria-modal="true" data-pwa-role="overlay" id="ov">
+    <div class="sheet">Sheet <button id="close" data-pwa-role="overlayCloseVia">Close</button></div>
+  </div>
+  <script>
+    const ov = document.getElementById('ov');
+    // Opens the modal but never marks the background inert / aria-hidden.
+    document.getElementById('open').onclick = () => ov.classList.add('open');
+    document.getElementById('close').onclick = () => ov.classList.remove('open');
+  </script>
+</body></html>

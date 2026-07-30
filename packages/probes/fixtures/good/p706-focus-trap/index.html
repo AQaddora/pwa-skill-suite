@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { margin: 0; font-family: system-ui; padding: 16px; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; }
+  .overlay.open { display: block; }
+  .sheet { background: #fff; margin: 40px; padding: 24px; }
+</style></head>
+<body>
+  <button id="open" data-pwa-role="overlayTrigger">Open</button>
+  <button id="bg-after">Background</button>
+  <div class="overlay" role="dialog" aria-modal="true" data-pwa-role="overlay" id="ov">
+    <div class="sheet">
+      <input id="modal-input" />
+      <button id="close" data-pwa-role="overlayCloseVia">Close</button>
+    </div>
+  </div>
+  <script>
+    const ov = document.getElementById('ov');
+    const input = document.getElementById('modal-input');
+    const closeBtn = document.getElementById('close');
+    let lastTrigger = null;
+    function open() {
+      lastTrigger = document.activeElement;
+      ov.classList.add('open');
+      input.focus();
+    }
+    function close() {
+      ov.classList.remove('open');
+      if (lastTrigger) lastTrigger.focus();
+    }
+    document.getElementById('open').onclick = open;
+    closeBtn.onclick = close;
+    ov.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'Tab') {
+        const f = [input, closeBtn];
+        const i = f.indexOf(document.activeElement);
+        e.preventDefault();
+        const ni = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i >= f.length - 1 ? 0 : i + 1);
+        f[ni].focus();
+      }
+    });
+  </script>
+</body></html>

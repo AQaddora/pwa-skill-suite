@@ -1,0 +1,7 @@
+.full {
+  width: 100%;
+}
+.clamped {
+  /* safe clamp — subtracting from 100vw avoids the scrollbar-gutter overflow */
+  max-width: calc(100vw - 32px);
+}

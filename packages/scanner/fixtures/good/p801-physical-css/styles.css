@@ -1,0 +1,9 @@
+.card {
+  margin-inline-start: 16px;
+  padding-inline-end: 8px;
+  text-align: start;
+}
+.pinned {
+  position: absolute;
+  inset-inline-start: 0;
+}

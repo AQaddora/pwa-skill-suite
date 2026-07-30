@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pwa-skill-suite/packages/catalog/schema.json",
+  "title": "PWA AI-mistake catalog entry",
+  "description": "Schema for a single entry in packages/catalog/catalog.json. The root document is an array of these.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "title",
+      "section",
+      "severity",
+      "detect",
+      "confidence",
+      "deviceOnly",
+      "aiWrites",
+      "symptom",
+      "correct",
+      "detectNotes",
+      "rule",
+      "probe",
+      "verified"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^P-\\d{3,4}$"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "section": {
+        "type": "string",
+        "enum": [
+          "ios-webkit",
+          "app-shell",
+          "responsive",
+          "manifest",
+          "service-worker",
+          "version-skew",
+          "performance",
+          "accessibility",
+          "rtl",
+          "forms",
+          "theming",
+          "build-deploy",
+          "meta"
+        ]
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["P0", "P1", "P2"]
+      },
+      "detect": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["static", "runtime", "lighthouse", "visual", "device"]
+        },
+        "minItems": 0,
+        "uniqueItems": true
+      },
+      "confidence": {
+        "type": "string",
+        "enum": ["high", "advisory"]
+      },
+      "deviceOnly": {
+        "type": "boolean"
+      },
+      "aiWrites": {
+        "type": ["string", "null"]
+      },
+      "symptom": {
+        "type": "string",
+        "minLength": 1
+      },
+      "correct": {
+        "type": "string",
+        "minLength": 1
+      },
+      "detectNotes": {
+        "type": "string",
+        "minLength": 1
+      },
+      "rule": {
+        "type": ["string", "null"]
+      },
+      "probe": {
+        "type": "null"
+      },
+      "verified": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ios", "chrome", "date"],
+        "properties": {
+          "ios": { "type": "string", "minLength": 1 },
+          "chrome": { "type": "string", "minLength": 1 },
+          "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      }
+    }
+  }
+}

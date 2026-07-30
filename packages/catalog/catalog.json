@@ -1425,7 +1425,7 @@
     "correct": "Network-first (or stale-while-revalidate with a fast timeout) for navigations; cache-first only for content-hashed immutable assets.",
     "detectNotes": "[S] classify the fetch handler's navigation strategy — reject cache-first for `request.mode === 'navigate'`. [R] deploy-B simulation (P-512). Advisory: classifying an arbitrary fetch handler's strategy is a control-flow heuristic, not a literal match.",
     "rule": "packages/scanner/rules/p502-sw-navigation-strategy.mjs",
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p502-no-stale-html.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1448,7 +1448,7 @@
     "correct": "Detect `updatefound` -> `installed` with an existing controller -> surface a non-blocking \"Update available — reload\", then `skipWaiting` + `clients.claim` on user confirmation.",
     "detectNotes": "No detect method documented in the source entry. [S] check for an `updatefound`/`installed`-with-existing-controller handler paired with a user-confirmed reload. [R] confirm the update banner appears and reload is user-gated. Advisory: confirming correct ordering needs flow analysis.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p503-update-surfaced.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1470,7 +1470,7 @@
     "correct": "Only after user-confirmed reload, or paired with a controlled reload on `controllerchange`.",
     "detectNotes": "[S] `skipWaiting` at install-time with no reload coordination. Advisory: proving \"no reload coordination\" is an absence-of-guard heuristic across the whole SW file.",
     "rule": "packages/scanner/rules/p504-skip-waiting.mjs",
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p504-no-uncontrolled-skip-waiting.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1493,7 +1493,7 @@
     "correct": "A global dynamic-import error handler that force-reloads once (guarded against reload loops), plus a retention window for old chunks on the origin.",
     "detectNotes": "[S] assert a chunk-error boundary exists. [R] deploy-B simulation with the old chunk removed. Advisory: presence of a boundary doesn't confirm it reloads correctly.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p505-chunk-recovery.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1691,7 +1691,7 @@
     "correct": "`Cache-Control: no-cache` on `sw.js` and the manifest; long immutable TTLs only on hashed assets.",
     "detectNotes": "[S] response-header assertion against the deployed origin, or against the headers config file (e.g. `vercel.json`, `netlify.toml`, `_headers`, nginx/CDN config) when checked at build time.",
     "rule": "packages/scanner/rules/p514-sw-cache-ttl.mjs",
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p514-sw-manifest-cache-ttl.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1825,7 +1825,7 @@
     "correct": "Version the cookie name on any breaking change and explicitly clear the old one; or read both shapes for one release. A deliberate migration, never an implicit one.",
     "detectNotes": "[S] diff auth-cookie names/shapes between builds A and B; flag a change with no clear-old path. [R] harness — authenticate on A, deploy B, assert the client reaches a coherent state: still authed, or cleanly logged out. Never wedged. Advisory: \"no clear-old path\" is a bundled code-presence heuristic.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p520-auth-cookie-coherent.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1870,7 +1870,7 @@
     "correct": "Version the API, or have the server advertise a minimum supported client so the app can force an update.",
     "detectNotes": "[R] harness — run A's shell against B's API; assert graceful handling (forced update, or a compatible response). A silent blank is a failure. Advisory: classifying \"graceful\" vs \"silent blank\" is a judgment call.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p522-api-skew-graceful.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1893,7 +1893,7 @@
     "correct": "Purge all user-scoped caches and storage on logout and on identity change. Where retention is deliberate, key it by user.",
     "detectNotes": "[S] assert the logout path clears caches + IDB. [R] sign in as A, sign out, sign in as B, assert no A-scoped data is reachable. Advisory: confirming complete coverage of every user-scoped store is a completeness heuristic.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p523-no-cross-user-data.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -1938,7 +1938,7 @@
     "correct": "Version the persisted schema; migrate or discard on read; wrap hydration in a failure path that falls back to clean state rather than dying.",
     "detectNotes": "[S] persisted reads are version-checked and failure-tolerant. [R] harness — seed A's storage, load B, assert boot succeeds. Advisory: guard-presence heuristic.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p525-storage-schema-boot.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2004,7 +2004,7 @@
     "correct": "The SW carries its build ID and declines to serve a mismatched shell; converge on one build.",
     "detectNotes": "[R] harness assertion.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p528-sw-shell-build-converge.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",
@@ -2071,7 +2071,7 @@
     "correct": "Distinguish optional from mandatory updates; a server-signalled minimum version triggers a forced reload.",
     "detectNotes": "[S] check for a distinct mandatory-update code path (minimum-version check + forced reload) separate from the optional-update banner (P-503). [R] harness — mark B as breaking, assert A's client force-updates rather than lingering. Advisory: distinguishing the mandatory path from the optional one is a branch heuristic.",
     "rule": null,
-    "probe": null,
+    "probe": "packages/deploy-harness/checks/p531-breaking-forces-update.mjs",
     "verified": {
       "ios": "18.x",
       "chrome": "13x",

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { margin: 0; font-family: system-ui; }
+      #open { min-width: 44px; min-height: 44px; }
+      .lazy-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        background: rgb(0 0 0 / 50%);
+      }
+      .panel { padding: 24px; background: white; }
+      .tabbar { position: fixed; inset: auto 0 0; z-index: 20; height: 56px; }
+    </style>
+  </head>
+  <body>
+    <button id="open">Open lazy overlay</button>
+    <nav class="tabbar" data-pwa-role="tabbar">Tabs</nav>
+    <script>
+      const trigger = document.getElementById('open');
+      if (new URLSearchParams(location.search).has('annotated')) {
+        trigger.dataset.pwaRole = 'overlayTrigger';
+      }
+      trigger.onclick = () => {
+        const overlay = document.createElement('section');
+        overlay.className = 'lazy-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.dataset.pwaRole = 'overlay';
+        overlay.innerHTML = '<div class="panel">Lazy overlay <button data-pwa-role="overlayCloseVia">Close</button></div>';
+        overlay.querySelector('button').onclick = () => overlay.remove();
+        document.body.append(overlay);
+      };
+    </script>
+  </body>
+</html>

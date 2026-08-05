@@ -6,10 +6,16 @@ import { lineColAt } from '../lib/loc.mjs';
 
 export const ids = ['P-541'];
 
+const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte']);
+
 const ASYNC_FN_START =
   /\basync\s+function\b[^{]*\{|\basync\s*\([^)]*\)\s*=>\s*\{|\basync\s+[A-Za-z_$][\w$]*\s*\([^)]*\)\s*\{|\basync\s+[A-Za-z_$][\w$]*\s*=>\s*\{/g;
 const POPUP_CALL = /\b(?:window\.open|signInWithPopup)\s*\(/;
 const AWAIT = /\bawait\b/;
+
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
 
 // Returns the index just past the '}' that matches the '{' at openIdx.
 function matchBraceEnd(contents, openIdx) {
@@ -25,7 +31,7 @@ function matchBraceEnd(contents, openIdx) {
 }
 
 export function check({ file, contents, ext }) {
-  if (!['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte'].includes(ext)) return [];
+  if (!CODE_EXT.has(ext)) return [];
   const out = [];
   const seen = new Set();
 

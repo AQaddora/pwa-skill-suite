@@ -1,24 +1,29 @@
 ---
 name: pwa-offline
-description: Use for service-worker strategy, the update flow, lazy-chunk-404 recovery after deploy, cache versioning, offline fallback, client storage, version skew across deploys, and the CDN/deploy headers that pin a broken worker. Fixes §5 service-worker (P-501..P-519), §5b version-skew (P-520..P-531), and §11 build-deploy (P-1101..P-1105). Trigger phrases: "users are stuck on the old version", "white screen after deploy", "service worker won't update", "add offline support", "chunk 404 after release", "cache-first is serving stale HTML", "sw.js is cached by the CDN".
+description: 'Use for service-worker strategy, the update flow, lazy-chunk-404 recovery after deploy, cache versioning, offline fallback, client storage, version skew across deploys, and the CDN/deploy headers that pin a broken worker. Fixes service-worker P-501..P-519, P-549, P-560..P-561; version-skew P-520..P-531; and build-deploy P-562, P-1101..P-1105. Trigger phrases: "users are stuck on the old version", "white screen after deploy", "service worker won''t update", "add offline support", "chunk 404 after release", "cache-first is serving stale HTML", "sw.js is cached by the CDN".'
 ---
 
 # pwa-offline
 
 The highest-stakes area: a wrong service worker can pin every user to a dead build with
-**the fix itself trapped behind the cache**. Covers §5 (**P-501..P-519**), §5b
-(**P-520..P-531**), and §11 (**P-1101..P-1105**).
+**the fix itself trapped behind the cache**. Covers service-worker entries
+(**P-501..P-519**, **P-549**, **P-560..P-561**), version skew (**P-520..P-531**), and
+build/deploy (**P-562**, **P-1101..P-1105**).
 
 **Audit first:**
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
+
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
 
 Static detection here classifies fetch-handler *strategy* and greps headers config — a
 heuristic, not proof. **The authoritative test is deploy A → deploy B on an existing
-client** (P-512): the single most valuable runtime test in the suite, and where almost
-every P0 in this section actually lives. `pwa-verify` / `packages/deploy-harness` runs it.
+client** (P-512): the single most valuable runtime test in the suite. The bundled
+`packages/deploy-harness` proves the harness checks against its fixtures; it does not prove
+an arbitrary repository. Require an explicit project deploy adapter or manual A→B evidence.
 
 ## The one that ends companies: caching strategy
 
@@ -61,6 +66,14 @@ every P0 in this section actually lives. `pwa-verify` / `packages/deploy-harness
 - **P-517** — IndexedDB for meaningful offline data, not `localStorage` (~5MB, synchronous). Treat client storage as evictable for infrequently-used installs and browser tabs; request persistence where it matters.
 - **P-518** — don't trust `navigator.onLine` (reports "online" on captive portals); confirm with a real request.
 - **P-519** — feature-detect Background/Periodic Sync (`'sync' in registration`) with a foreground fallback.
+- **P-549** — mobile notifications must use service-worker
+  `registration.showNotification()`, not page-context `new Notification()`. Coordinate the
+  permission/subscription UX with `pwa-push-permissions`; keep one worker and test click
+  focus/open behavior.
+- **P-560** — generate precache URLs from the actual build output. One stale URL makes
+  atomic `cache.addAll()` reject the entire install; surface that failure to telemetry.
+- **P-561** — catch and report every `serviceWorker.register()` rejection, and keep the
+  worker path out of SPA catch-all rewrites so HTML is never served as `sw.js`.
 
 ## §5b — Version skew & stale client state
 
@@ -82,6 +95,9 @@ the keystone** — without a client build stamp, nothing else here has anything 
 
 ## §11 — Build, deploy & platform config
 
+- **P-562** — hard-refresh representative deep routes and configure the repository's real
+  host to rewrite client-side routes to `index.html` without rewriting `sw.js`, manifests,
+  assets, APIs, or `.well-known` endpoints.
 - **P-1101** — on subpath deploys, set the build base path, manifest paths, and SW registration scope **consistently** to the real subpath (they break together otherwise).
 - **P-1102** — `Cache-Control: no-cache` on `sw.js`/manifest at the **server/CDN** layer (same as P-514, stated separately because it lives in config, not app code, and survives every app-side fix).
 - **P-1103** — configure the framework PWA plugin (`next-pwa`/`vite-plugin-pwa`) for the actual mode (App Router / static export / middleware); verify the precache manifest targets the real output dir.
@@ -93,8 +109,9 @@ the keystone** — without a client build stamp, nothing else here has anything 
 Works standalone. When `superpowers` is available (detect **by capability** — is
 `test-driven-development` invocable now? — never by path-sniffing):
 
-- **`test-driven-development`** — the deploy-A→B harness *is* the failing test: run it
-  against the current SW, watch it wedge/404, apply the strategy fix, watch it converge.
+- **`test-driven-development`** — when a project adapter exists, the deploy-A→B harness is
+  the failing test: run it against the current SW, watch it wedge/404, apply the strategy
+  fix, watch it converge. The bundled fixture run is only harness self-conformance.
 - **`verification-before-completion`** / `pwa-verify` — hard done-gate. §5 work is not
   done until the update-path test (P-512, P-1203) passes and the app has been tested
   offline (P-1204). A green build is not runtime evidence (P-1210).

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA RTL"
+  short_description: "Build robust RTL and localized PWA interfaces"
+  default_prompt: "Use $pwa-rtl to make this web app work correctly in RTL locales."

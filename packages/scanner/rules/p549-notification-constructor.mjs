@@ -8,6 +8,10 @@ export const ids = ['P-549'];
 const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte']);
 const NEW_NOTIFICATION = /\bnew\s+Notification\s*\(/g;
 
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];
   const out = [];

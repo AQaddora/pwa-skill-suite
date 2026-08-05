@@ -9,6 +9,10 @@ const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', 
 const TRIGGER = /beforeinstallprompt|signInWithPopup|signInWithRedirect|signInWithGoogle|\boauth\b/i;
 const IN_APP_UA = /FBAN|FBAV|Instagram|\bLine\b|TikTok/;
 
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];
   const m = TRIGGER.exec(contents);

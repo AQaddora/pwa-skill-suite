@@ -13,10 +13,19 @@ export function anyFailures(results) {
   return results.some((r) => r.outcome === 'FAIL');
 }
 
-export function renderProbeOutcomes(results, { engines = [], skipped = [] } = {}) {
+export function renderProbeOutcomes(
+  results,
+  { engines = [], skipped = [], engineCoverage = null } = {},
+) {
   const lines = [];
   lines.push('## Probe results', '');
   lines.push(`Engines exercised: ${engines.length ? engines.join(', ') : '(none)'}`);
+  if (engineCoverage) {
+    lines.push(
+      `Engines required: ${engineCoverage.expected.length ? engineCoverage.expected.join(', ') : '(none)'}`,
+      `Engine coverage: **${engineCoverage.status}**`,
+    );
+  }
   if (skipped.length) {
     lines.push('');
     for (const s of skipped) lines.push(`Engine skipped: **${s.engine}** — ${s.reason}`);

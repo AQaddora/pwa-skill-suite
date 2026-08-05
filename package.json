@@ -2,13 +2,16 @@
   "name": "pwa-skill-suite",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test packages/*/test/*.test.mjs",
     "probes": "node packages/probes/cli.mjs",
     "harness": "node packages/deploy-harness/cli.mjs",
     "verify": "node skills/pwa-verify/scripts/run-verify.mjs"
   },
-  "devDependencies": {
+  "dependencies": {
     "playwright": "^1.62.0"
   }
 }

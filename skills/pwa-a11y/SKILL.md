@@ -1,6 +1,6 @@
 ---
 name: pwa-a11y
-description: Use to stop "app feel" from becoming an accessibility regression — keep pinch-zoom enabled, restore focus styles, give icon buttons names, make div-buttons real buttons, trap and restore focus in overlays, gate motion, and label inputs. Fixes §7 accessibility (P-701..P-712). Trigger phrases: "accessibility pass", "screen reader can't use the tab bar", "focus outline is gone", "icon buttons have no label", "trap focus in the modal", "prefers-reduced-motion", "don't disable pinch zoom", "inputs missing labels".
+description: 'Use to stop "app feel" from becoming an accessibility regression — keep pinch-zoom enabled, restore focus styles, give icon buttons names, make div-buttons real buttons, trap and restore focus in overlays, gate motion, and label inputs. Fixes §7 accessibility (P-701..P-712). Trigger phrases: "accessibility pass", "screen reader can''t use the tab bar", "focus outline is gone", "icon buttons have no label", "trap focus in the modal", "prefers-reduced-motion", "don''t disable pinch zoom", "inputs missing labels".'
 ---
 
 # pwa-a11y
@@ -11,19 +11,24 @@ introduce — the a11y counterweight to the rest of the suite. Covers §7 (**P-7
 **Audit first:**
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
 
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
+
 Some of §7 is statically detectable (P-701 pinch-zoom, P-703 icon buttons, P-705 focus,
-P-707 reduced-motion, P-710 labels, P-712 headings); focus trapping, contrast, and route
-announcements are `runtime` and confirmed by `pwa-verify`.
+P-707 reduced-motion, P-710 labels, P-712 headings). The default runtime pack covers focus
+behavior and element semantics, not a complete contrast, route-announcement, screen-reader,
+or keyboard audit; missing evidence remains `UNVERIFIED`.
 
 ## The correction this skill hard-enforces (design §8)
 
-- **P-701 — never disable pinch zoom.** `user-scalable=no` / `maximum-scale=1` (or `<1`) is
-  a **WCAG 1.4.4 failure** the suite must never emit, and iOS Safari ignores it anyway. This
-  is a **FAIL on sight, never a suggestion.** Fix input-focus zoom with 16px fonts (P-101,
-  `pwa-native-feel`); leave pinch zoom enabled.
+- **P-701 — never disable pinch zoom.** Viewport caps, document-level gesture/multi-touch
+  cancellation, and restrictive root `touch-action` are all the same **WCAG 1.4.4 failure**.
+  This is a **FAIL on sight, never a suggestion.** Fix input-focus zoom with 16px fonts
+  (P-101, `pwa-native-feel`) and double-tap zoom on controls with `touch-action:
+  manipulation`; leave deliberate pinch zoom enabled.
 - **P-702** — `user-select: none` on **chrome only** (nav, tab bar, buttons, headers), never
   globally; real content stays selectable (paired with P-111). Global application breaks
   copy and degrades assistive tooling.
@@ -46,8 +51,8 @@ announcements are `runtime` and confirmed by `pwa-verify`.
 Works standalone. When `superpowers` is available (detect **by capability** — is
 `test-driven-development` invocable now? — never by path-sniffing):
 
-- **`test-driven-development`** — write the probe (grep the viewport meta and **fail** on
-  `user-scalable=no`; open a modal and assert focus is trapped then restored on close;
+- **`test-driven-development`** — write the probe (fail on viewport caps, root gesture
+  cancellation, or restrictive root `touch-action`; open a modal and assert focus is trapped then restored on close;
   assert every interactive element has an accessible name), watch it fail, fix, watch it pass.
 - **`verification-before-completion`** / `pwa-verify` — the done-gate. Run a full
   screen-reader and keyboard-only pass before claiming done (P-1208); focus trapping,

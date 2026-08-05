@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Manifest"
+  short_description: "Build and validate installable PWA manifests"
+  default_prompt: "Use $pwa-manifest to build and validate the manifest and install experience for this PWA."

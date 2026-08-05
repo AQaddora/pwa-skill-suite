@@ -64,3 +64,43 @@ test('fix text is pulled verbatim from the catalog entry', () => {
   const md = renderMarkdown(model);
   assert.ok(md.includes('Use logical properties: margin-inline-start, text-align: start.'));
 });
+
+test('blocked markdown renders the diagnostic prominently', () => {
+  const md = renderMarkdown({
+    ...model,
+    status: 'BLOCKED',
+    blocked: true,
+    diagnostics: [
+      { code: 'TARGET_UNREADABLE', path: '/tmp/app', message: 'permission denied' },
+    ],
+  });
+  assert.match(md, /\*\*Scan status:\*\* BLOCKED/);
+  assert.match(md, /TARGET_UNREADABLE/);
+  assert.match(md, /permission denied/);
+});
+
+test('markdown discloses incomplete mixed-format source coverage', () => {
+  const md = renderMarkdown({
+    ...model,
+    outcomesByEntry: new Map([
+      ['P-701', 'UNVERIFIED'],
+      ['P-703', 'PASS'],
+    ]),
+    incompleteCoverageById: { 'P-701': 1 },
+  });
+  assert.match(md, /1 PASS · 0 FAIL · 1 UNVERIFIED/);
+  assert.match(md, /UNVERIFIED source coverage/);
+  assert.match(md, /P-701 \(1\)/);
+  assert.match(md, /scan completed; this is not a readiness PASS/);
+});
+
+test('markdown discloses baselined findings as FAIL rather than PASS', () => {
+  const md = renderMarkdown({
+    ...model,
+    baselinedFindings: [{ id: 'P-701', file: 'index.html', line: 1 }],
+    outcomesByEntry: new Map([['P-701', 'FAIL']]),
+  });
+  assert.match(md, /Baselined findings/);
+  assert.match(md, /remain FAIL, never PASS/);
+  assert.match(md, /P-701/);
+});

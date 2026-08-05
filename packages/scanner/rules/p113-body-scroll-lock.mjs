@@ -14,6 +14,10 @@ const PATTERNS = [
   /\bscrollLock\s*\(/g,
 ];
 
+export function appliesTo({ ext }) {
+  return SOURCE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!SOURCE_EXT.has(ext)) return [];
   // If the file gates behaviour on a media query at all, assume the lock is conditional.

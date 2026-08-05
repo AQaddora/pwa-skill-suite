@@ -15,20 +15,49 @@ function bucketOf(entry) {
   return entry.severity || 'P2';
 }
 
-export function buildReport({ findings = [], catalog = [], surfaces = {}, blocked = false }) {
+export function buildReport({
+  findings = [],
+  baselinedFindings = [],
+  catalog = [],
+  surfaces = {},
+  coverageById = {},
+  incompleteCoverageById = {},
+  blocked = false,
+  diagnostics = [],
+}) {
   const findingsById = new Map();
   for (const f of findings) {
     if (!findingsById.has(f.id)) findingsById.set(f.id, []);
     findingsById.get(f.id).push(f);
   }
+  const baselinedFindingsById = new Map();
+  for (const f of baselinedFindings) {
+    if (!baselinedFindingsById.has(f.id)) baselinedFindingsById.set(f.id, []);
+    baselinedFindingsById.get(f.id).push(f);
+  }
 
   const outcomesByEntry = new Map();
   for (const entry of catalog) {
     const entryFindings = findingsById.get(entry.id) || [];
+    const entryBaselinedFindings = baselinedFindingsById.get(entry.id) || [];
     const surfacePresent = SURFACE_SECTIONS.has(entry.section) ? surfaces[entry.section] : undefined;
+    const applicableFiles =
+      coverageById instanceof Map ? coverageById.get(entry.id) ?? 0 : coverageById[entry.id] ?? 0;
+    const incompleteFiles =
+      incompleteCoverageById instanceof Map
+        ? incompleteCoverageById.get(entry.id) ?? 0
+        : incompleteCoverageById[entry.id] ?? 0;
     outcomesByEntry.set(
       entry.id,
-      deriveOutcome({ catalogEntry: entry, findings: entryFindings, surfacePresent, blocked }),
+      deriveOutcome({
+        catalogEntry: entry,
+        findings: entryFindings,
+        baselinedFindings: entryBaselinedFindings,
+        surfacePresent,
+        applicableFiles,
+        incompleteFiles,
+        blocked,
+      }),
     );
   }
 
@@ -42,5 +71,17 @@ export function buildReport({ findings = [], catalog = [], surfaces = {}, blocke
     else summary.p2 += g.count;
   }
 
-  return { findings, grouped, outcomesByEntry, blindSpots: SCANNER_BLIND_SPOTS, summary };
+  return {
+    status: blocked ? 'BLOCKED' : 'COMPLETE',
+    blocked,
+    diagnostics,
+    findings,
+    baselinedFindings,
+    coverageById,
+    incompleteCoverageById,
+    grouped,
+    outcomesByEntry,
+    blindSpots: SCANNER_BLIND_SPOTS,
+    summary,
+  };
 }

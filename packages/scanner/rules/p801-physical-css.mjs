@@ -23,6 +23,15 @@ const PHYSICAL_PROPS = new Set([
 // Tailwind physical tokens (after stripping any responsive/state prefix).
 const TW_PHYSICAL = /^(?:(?:ml|mr|pl|pr)-|border-[lr](?:-|$)|text-(?:left|right)$)/;
 
+export function appliesTo({ ext }) {
+  return CSS_EXT.has(ext) || CLASS_EXT.has(ext);
+}
+
+// Class attributes are inspected in SFCs, embedded/preprocessed `<style>` blocks are not.
+export function coverageComplete({ ext }) {
+  return ext !== '.vue' && ext !== '.svelte';
+}
+
 function finding(file, line, column, excerpt, confidence = 'high') {
   return { id: 'P-801', file, line, column, excerpt, severity: 'P0', confidence };
 }

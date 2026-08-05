@@ -112,10 +112,11 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** `user-select: none` on chrome only (nav, tab bar, buttons, headers) and explicitly `user-select: text` on real content (messages, articles, code, addresses). Never global.
 **Detect:** Reclassified: whether chrome/content is correctly split requires resolving `user-select` across the cascade for every selector, not a single source match. Phase 2 will implement this as a computed-style/DOM sweep: assert content is selectable and chrome is not.
 
-### P-112 · Long-press pops the iOS callout menu on images/links   [P2] [S]
-**Breaks:** Long-pressing UI imagery or icon links pops iOS's callout menu (Copy/Save/Look Up), which feels like a webpage rather than an app for chrome elements.
-**Correct:** `-webkit-touch-callout: none` on UI imagery and icon links (keep it on user content where "save image" is desirable).
-**Detect:** [S] scanner.
+### P-112 · iOS touch-callout suppression is too broad   [P2] [S]
+**AI writes:** `-webkit-touch-callout: none` on `*`, roots, all anchors/images, or a content container to prevent every long-press preview.
+**Breaks:** Broad suppression makes real content links and images lose native preview, copy, and save actions.
+**Correct:** Apply `-webkit-touch-callout: none` only to explicit app chrome such as buttons, navigation, headers, tab bars, and icon links. Keep callouts available on user/content links and media.
+**Detect:** [S] flag `-webkit-touch-callout: none` on universal/root selectors, content containers, or global anchor/image alternatives, including broad alternatives hidden inside `:where()`/`:is()`. Permit button selectors and anchors scoped to app chrome such as navigation, headers, tab bars, and explicit icon-link classes. This presence rule detects over-broad suppression; device review is still needed to find chrome that is missing suppression.
 
 ### P-113 · `position: sticky` silently dies   [P0] [S]
 **AI writes:** An unconditional `document.body.style.overflow = 'hidden'` scroll lock on mount.
@@ -184,6 +185,11 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** `autocapitalize="none" autocorrect="off" spellcheck="false"` on email/username/code fields.
 **Detect:** [S] scanner keyed on field type. Advisory: matching "email/username/code" fields is a semantic classification from name/label/type, not a literal token.
 
+### P-126 · iOS touch callout appears on intentional app chrome   [P2] [D]
+**Breaks:** Long-pressing an icon button, tab, or other intentional app chrome opens iOS's Copy/Save/Look Up menu and exposes webpage behavior.
+**Correct:** On a real iOS device, identify only the chrome that should not expose content actions and apply `-webkit-touch-callout: none` to that explicit scope. Keep previews, copy, and save available on real content links and media (P-112).
+**Detect:** [D] Long-press representative app-chrome controls in installed and Safari modes. Static absence cannot prove a failure because whether an element is content or chrome is semantic; keep this UNVERIFIED until a real-device observation is recorded.
+
 ---
 
 # §2 · App shell & navigation
@@ -219,10 +225,10 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 **Correct:** CSS scroll-driven animations where supported; otherwise a passive listener + `requestAnimationFrame` batching, or an IntersectionObserver sentinel. Never read-then-write per event.
 **Detect:** [S] flag non-passive scroll listeners and sync style writes inside them. [R] assert no long tasks > 50ms during a scripted scroll. Advisory: identifying a synchronous style write inside a callback is a call-site heuristic, not a literal match.
 
-### P-207 · Modal renders behind the fixed bar / stacking-context trap   [P0] [R]
-**Breaks:** A `transform`, `filter`, `backdrop-filter`, `will-change`, or `contain` on any ancestor re-parents `position: fixed` to that ancestor. The modal is then clipped or trapped — and the agent "fixes" it with escalating z-index, which cannot work.
-**Correct:** Portal overlays to `document.body` (or a top-level `#overlay-root`), or use the top layer via `<dialog>` / popover. Audit ancestors for transform-family properties.
-**Detect:** Reclassified: the offending ancestor can live in any component up the tree, and identifying the actual stacking-context break requires the rendered DOM chain, not a single file's AST. Phase 2 will implement this as a computed-style/DOM sweep: assert overlay bounding box covers the viewport and sits above the tab bar.
+### P-207 · Overlay is clipped, trapped, or unreachable in the mobile viewport   [P0] [R]
+**Breaks:** A transform-family ancestor can trap a fixed overlay behind app chrome. On short portrait or landscape viewports, an oversized sheet can also extend beyond the visual viewport, scroll the page instead of its own body, or leave its close control unreachable; nested overlays and RTL can expose the same failures.
+**Correct:** Portal overlays to `document.body`/a top-level overlay root or use the top layer. Keep every open surface inside the visual viewport and safe areas, give overflowing content an internal scroll region, keep a visible reachable close control, and preserve those guarantees in RTL and nested-overlay states.
+**Detect:** [R] For each configured overlay journey, test short portrait and landscape cells in the journey's document/LTR/RTL direction. Multi-trigger journeys exercise nested or stateful overlays. Assert visible bounds remain inside the visual viewport, horizontal overflow is absent, overflowing content has a working internal scroll owner, a semantically identified close control is visible and hittable, and persistent navigation does not paint above the overlay layer. Geometry verifies the rendered result without claiming to statically identify every stacking-context ancestor.
 
 ### P-208 · Hardware/gesture back doesn't close the modal   [P1] [R]
 **Breaks:** On Android, back closes the entire app instead of the sheet. On iOS the edge-swipe navigates away.
@@ -637,10 +643,10 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 # §7 · Accessibility
 
 ### P-701 · Pinch-zoom disabled   [P0] [S]
-**AI writes:** `user-scalable=no, maximum-scale=1` — very often as the "fix" for P-101.
+**AI writes:** `user-scalable=no`, `maximum-scale=1`, Next.js `userScalable: false`, root `touch-action: none`/pan-only rules, or gesture listeners that call `preventDefault()` — often as a "fix" for P-101 or to imitate a native shell.
 **Breaks:** WCAG 1.4.4 failure. Low-vision users cannot zoom. iOS 10+ ignores it in Safari anyway, so it fails and doesn't work.
 **Correct:** Fix input zoom with 16px fonts (P-101). Leave pinch zoom enabled. Blocking pinch zoom is a WCAG 1.4.4 failure the suite must never emit — this is a FAIL, never a suggestion.
-**Detect:** [S] grep the viewport meta content for `user-scalable=no` / `maximum-scale=1` (or <1). Crisp presence check — the suite fails this on sight.
+**Detect:** [S] fail on viewport meta `user-scalable=no|0` or `maximum-scale<=1`; Next-style `viewport`/`generateViewport` exports with `userScalable:false` or `maximumScale<=1`; document/window `gesturestart` or `gesturechange` listeners whose callback prevents default; multi-touch `touchmove` prevention; and root `html`/`body`/`:root` touch-action values that omit pinch zoom (`none` or pan-only). Do not flag `touch-action: manipulation`, including on interactive controls, because it retains pinch zoom.
 
 ### P-702 · `user-select: none` applied globally   [P1] [R]
 **Breaks:** Breaks copy for real content and degrades assistive tooling. See P-111 — chrome only.
@@ -1047,7 +1053,7 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 
 | § | area | entries | P0 |
 |---|---|---|---|
-| 1 | iOS Safari & WebKit | 25 | 4 |
+| 1 | iOS Safari & WebKit | 26 | 4 |
 | 2 | App shell & navigation | 11 | 3 |
 | 3 | Responsive layout | 10 | 1 |
 | 4 | Manifest, install & icons | 17 | 7 |
@@ -1066,14 +1072,14 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 | 16 | Lifecycle & realtime | 4 | 1 |
 | 17 | Observability & error reporting | 1 | 1 |
 | 18 | What agents never test (the meta-failures) | 10 | 0 |
-| | **total** | **176** | **40** |
+| | **total** | **177** | **40** |
 
 
 
 **Detection feasibility**
 
-- **~63%** are catchable **statically** — no browser needed, runs on every save.
-- **~34%** need a **runtime** browser assertion.
+- **~62%** are catchable **statically** — no browser needed, runs on every save.
+- **~33%** need a **runtime** browser assertion.
 - **~6%** are **device-only** and must be reported as `UNVERIFIED`, never as passing.
 
 

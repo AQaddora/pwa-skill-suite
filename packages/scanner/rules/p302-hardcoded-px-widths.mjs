@@ -12,6 +12,15 @@ const CLASS_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm', '
 const THRESHOLD = 200;
 const TW_WIDTH = /^w-\[(\d+)px\]$/;
 
+export function appliesTo({ ext }) {
+  return CSS_EXT.has(ext) || CLASS_EXT.has(ext);
+}
+
+// Class attributes are inspected in SFCs, embedded/preprocessed `<style>` blocks are not.
+export function coverageComplete({ ext }) {
+  return ext !== '.vue' && ext !== '.svelte';
+}
+
 function finding(file, line, column, excerpt) {
   return { id: 'P-302', file, line, column, excerpt, severity: 'P1', confidence: 'advisory' };
 }

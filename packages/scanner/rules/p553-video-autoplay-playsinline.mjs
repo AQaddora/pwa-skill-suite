@@ -8,6 +8,10 @@ const MARKUP_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm'])
 const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte']);
 const PLAY_CALL = /\.play\s*\(\s*\)/g;
 
+export function appliesTo({ ext }) {
+  return MARKUP_EXT.has(ext) || CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   const out = [];
 

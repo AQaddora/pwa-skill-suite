@@ -10,6 +10,10 @@ export const ids = ['P-703'];
 const MARKUP_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm']);
 const BUTTON = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
 
+export function appliesTo({ ext }) {
+  return MARKUP_EXT.has(ext);
+}
+
 function hasAccessibleName(attrs, inner) {
   if (/\baria-label\b|\baria-labelledby\b|\btitle\s*=/i.test(attrs)) return true;
   if (/sr-only|visually-hidden|visuallyhidden/i.test(inner)) return true;

@@ -1,4 +1,6 @@
-// Loads all rules/*.mjs modules and validates each declares `ids` (array) + `check` (fn).
+// Loads all rules/*.mjs modules and validates each declares `ids` (array),
+// `appliesTo` (fn), and `check` (fn). Rules that can inspect only part of an
+// otherwise applicable container format may also export `coverageComplete`.
 // Attaches a filename-derived `slug` used to locate fixtures.
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +13,9 @@ let cache = null;
 
 export async function loadRules() {
   if (cache) return cache;
-  let files;
-  try {
-    files = readdirSync(RULES_DIR).filter((f) => f.endsWith('.mjs'));
-  } catch {
-    files = [];
+  const files = readdirSync(RULES_DIR).filter((f) => f.endsWith('.mjs'));
+  if (files.length === 0) {
+    throw new Error(`no scanner rule modules found in ${RULES_DIR}`);
   }
   files.sort();
   const rules = [];
@@ -27,7 +27,23 @@ export async function loadRules() {
     if (typeof mod.check !== 'function') {
       throw new Error(`rule ${file} must export a \`check\` function`);
     }
-    rules.push({ slug: basename(file, '.mjs'), ids: mod.ids, check: mod.check });
+    if (typeof mod.appliesTo !== 'function') {
+      throw new Error(`rule ${file} must export an \`appliesTo\` function`);
+    }
+    if (mod.relevantTo != null && typeof mod.relevantTo !== 'function') {
+      throw new Error(`rule ${file} \`relevantTo\` must be a function when exported`);
+    }
+    if (mod.coverageComplete != null && typeof mod.coverageComplete !== 'function') {
+      throw new Error(`rule ${file} \`coverageComplete\` must be a function when exported`);
+    }
+    rules.push({
+      slug: basename(file, '.mjs'),
+      ids: mod.ids,
+      appliesTo: mod.appliesTo,
+      relevantTo: mod.relevantTo,
+      coverageComplete: mod.coverageComplete,
+      check: mod.check,
+    });
   }
   return (cache = rules);
 }

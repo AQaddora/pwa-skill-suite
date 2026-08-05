@@ -22,13 +22,14 @@ export default {
       }
 
       proxy.swapTo(buildBDir);
-      // Give the browser a chance to notice the new sw.js (as it would in the background)
-      // without ever telling the app to activate it.
-      await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r && r.update().catch(() => {})));
-
+      // Install the observer *before* asking the registration to update. An
+      // unconditional skipWaiting() can change the controller before update()
+      // resolves, especially on a busy CI host; observing afterwards creates a
+      // false PASS race.
       const controllerChanged = await page.evaluate(
-        (ms) =>
-          new Promise((resolve) => {
+        async (ms) => {
+          const initialController = navigator.serviceWorker.controller;
+          const changed = new Promise((resolve) => {
             const t = setTimeout(() => resolve(false), ms);
             navigator.serviceWorker.addEventListener(
               'controllerchange',
@@ -38,7 +39,12 @@ export default {
               },
               { once: true },
             );
-          }),
+          });
+          const registration = await navigator.serviceWorker.getRegistration();
+          await registration?.update().catch(() => {});
+          if (navigator.serviceWorker.controller !== initialController) return true;
+          return changed;
+        },
         OBSERVE_MS,
       );
       const buildIdStillA = await page.evaluate(() => window.app.buildId);

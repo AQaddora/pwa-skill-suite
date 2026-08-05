@@ -1,0 +1,16 @@
+:where(a, button, summary) {
+  -webkit-touch-callout: none;
+}
+
+main,
+.content {
+  -webkit-touch-callout: none;
+}
+
+img {
+  -webkit-touch-callout: none;
+}
+
+body a {
+  -webkit-touch-callout: none;
+}

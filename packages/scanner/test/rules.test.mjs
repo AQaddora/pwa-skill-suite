@@ -14,11 +14,16 @@ const rules = await loadRules();
 for (const rule of rules) {
   const { slug } = rule;
 
+  test(`${slug}: declares explicit applicability`, () => {
+    assert.equal(typeof rule.appliesTo, 'function');
+  });
+
   test(`${slug}: fires on bad fixture`, async () => {
     const dir = fixtureDir('bad', slug);
     assert.ok(existsSync(dir), `missing bad fixture for ${slug}`);
-    const { findings } = await runScan(dir);
+    const { findings, coverageById } = await runScan(dir);
     for (const id of rule.ids) {
+      assert.ok(coverageById[id] > 0, `expected ${id} to cover at least one bad fixture file`);
       assert.ok(
         findings.some((f) => f.id === id),
         `expected ${id} to fire on bad/${slug}, got: ${findings.map((f) => f.id).join(',') || 'none'}`,
@@ -29,8 +34,9 @@ for (const rule of rules) {
   test(`${slug}: silent on good fixture`, async () => {
     const dir = fixtureDir('good', slug);
     assert.ok(existsSync(dir), `missing good fixture for ${slug}`);
-    const { findings } = await runScan(dir);
+    const { findings, coverageById } = await runScan(dir);
     for (const id of rule.ids) {
+      assert.ok(coverageById[id] > 0, `expected ${id} to cover at least one good fixture file`);
       assert.ok(
         !findings.some((f) => f.id === id),
         `expected ${id} to stay silent on good/${slug}, got: ${findings

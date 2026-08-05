@@ -29,5 +29,18 @@ export function writeBaseline(path, findings) {
 }
 
 export function filterAgainstBaseline(findings, baselineSet) {
-  return findings.filter((f) => !baselineSet.has(keyOf(f)));
+  return partitionAgainstBaseline(findings, baselineSet).findings;
+}
+
+// Baselines reduce migration noise; they do not turn known defects into proof
+// that a rule passed. Keep the suppressed findings as first-class evidence so
+// the report can disclose them and preserve FAIL for the affected entries.
+export function partitionAgainstBaseline(findings, baselineSet) {
+  const active = [];
+  const baselinedFindings = [];
+  for (const finding of findings) {
+    if (baselineSet.has(keyOf(finding))) baselinedFindings.push(finding);
+    else active.push(finding);
+  }
+  return { findings: active, baselinedFindings };
 }

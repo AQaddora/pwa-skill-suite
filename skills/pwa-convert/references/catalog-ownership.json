@@ -1,0 +1,21 @@
+{
+  "accessibility": "pwa-a11y",
+  "app-shell": "pwa-shell",
+  "build-deploy": "pwa-offline",
+  "forms": "pwa-native-feel",
+  "identity-auth": "pwa-auth-state",
+  "in-app-browser": "pwa-auth-state",
+  "ios-webkit": "pwa-native-feel",
+  "lifecycle": "pwa-runtime-resilience",
+  "manifest": "pwa-manifest",
+  "media": "pwa-runtime-resilience",
+  "meta": "pwa-verify",
+  "observability": "pwa-runtime-resilience",
+  "performance": "pwa-responsive",
+  "permissions": "pwa-push-permissions",
+  "responsive": "pwa-responsive",
+  "rtl": "pwa-rtl",
+  "service-worker": "pwa-offline",
+  "theming": "pwa-manifest",
+  "version-skew": "pwa-offline"
+}

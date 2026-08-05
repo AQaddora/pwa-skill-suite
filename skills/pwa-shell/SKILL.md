@@ -1,6 +1,6 @@
 ---
 name: pwa-shell
-description: Use when making a web app's navigation feel like an installed app — persistent tab bar, header compaction, sidebar-to-drawer, scroll restoration, hardware back, and overlay stacking. Fixes §2 app-shell catalog entries P-201..P-210. Trigger phrases: "tab bar scrolls away", "make the shell persistent", "sidebar should be a drawer on mobile", "modal renders behind the tab bar", "back button doesn't close the sheet", "restore scroll position per tab".
+description: 'Use when making a web app''s navigation feel like an installed app — persistent tab bar, header compaction, sidebar-to-drawer, scroll restoration, hardware back, overlay stacking, and cross-platform safe areas. Fixes app-shell entries P-201..P-210 and P-547. Trigger phrases: "tab bar scrolls away", "make the shell persistent", "sidebar should be a drawer on mobile", "modal renders behind the tab bar", "back button doesn''t close the sheet", "restore scroll position per tab".'
 ---
 
 # pwa-shell
@@ -9,12 +9,19 @@ Builds and repairs the **app shell** — the persistent chrome (tab bar, header,
 overlays) that separates "an app" from "a website in a box". Covers §2 of the catalog,
 entries **P-201..P-210**.
 
+It also owns **P-547**: safe-area insets are not iOS-only. Apply
+`env(safe-area-inset-*)` without UA or WebKit gates so Android edge-to-edge installs protect
+their gesture/navigation areas too; unsupported insets safely resolve to zero.
+
 **Audit before you touch anything.** Run `pwa-audit` first so the changes are driven by
 findings, not guesses:
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
+
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
 
 Most of §2 is `runtime`/`visual` in the catalog — a static scan is a weak proxy (it can
 read a component's CSS but not JS-driven positioning or DOM node identity across a
@@ -31,7 +38,7 @@ authoritative check is the runtime pack (`pwa-verify`, Phase 2).
 | **P-204** | No per-tab scroll restoration | Persist `scrollTop` per tab, restore on re-entry, reset to top on active-tab re-tap (the native idiom). |
 | **P-205** | Desktop sidebar shipped to mobile | Below the breakpoint the sidebar becomes a drawer: backdrop, focus trap, ESC + backdrop-tap close, `inert` background, **media-gated** scroll lock (never unconditional — that is P-113), and a history entry so Android back closes it (P-208). |
 | **P-206** | Header compaction with scroll jank | CSS scroll-driven animation where supported; otherwise a **passive** listener + `requestAnimationFrame` batching or an IntersectionObserver sentinel. Never read-then-write per event. |
-| **P-207** | Modal behind the fixed bar / stacking-context trap | Portal overlays to `document.body` (or `#overlay-root`), or use the top layer via `<dialog>`/popover. Escalating `z-index` cannot fix a `transform`/`filter`/`backdrop-filter`/`contain` ancestor — audit those instead. |
+| **P-207** | Modal behind the fixed bar, clipped, or shaped like a desktop popup | Portal overlays to `document.body` (or `#overlay-root`), or use the top layer via `<dialog>`/popover. Bound the visible surface to the visual viewport, give long content one internal scroll owner, keep close/actions reachable, and use safe-area padding. Escalating `z-index` cannot fix a transformed/contained ancestor. |
 | **P-208** | Hardware/gesture back doesn't close the modal | Push a history entry when opening an overlay; close on `popstate`. |
 | **P-209** | Route transitions break on back navigation | Direction-aware transitions driven by navigation type; gate motion behind `prefers-reduced-motion` (P-707). |
 | **P-210** | Competing nested scroll containers | One scroll owner per screen; `overscroll-behavior: contain` on any genuinely nested scroller. |
@@ -43,7 +50,11 @@ authoritative check is the runtime pack (`pwa-verify`, Phase 2).
    above the outlet.
 2. **P-201 / P-202** — pin the bar, then reserve its height in every scroller from one shared token.
 3. **P-205** — convert the sidebar to a drawer. Reuse the overlay primitive you build for P-207/P-208.
-4. **P-207 / P-208** — one overlay primitive: portalled to a top-level root, history-backed, focus-trapped. Every modal, sheet, and the drawer share it.
+4. **P-207 / P-208** — one overlay primitive: portalled to a top-level root,
+   history-backed, focus-trapped, viewport-bounded, and internally scrollable. Every modal,
+   sheet, and drawer shares it. Declare nested or stateful journeys in
+   `pwa-probes.config.json` under `scenarios.overlays` instead of adding repository-specific
+   logic to the probe.
 5. **P-204 / P-206 / P-209 / P-210** — polish once the structure is right.
 
 The recurring anti-pattern across this section is the **unconditional body scroll lock**
@@ -59,7 +70,9 @@ invocable as a skill right now? — never by sniffing plugin paths):
 
 - **`test-driven-development`** — write the runtime probe for the fix (tag the bar node,
   navigate, assert the same DOM node survives; scroll, switch tab, return, assert
-  `scrollTop` restored ±2px), watch it fail, apply the fix, watch it pass.
+  `scrollTop` restored ±2px; open overlays at short portrait/landscape sizes in LTR/RTL and
+  assert containment, internal scrolling, reachable close controls, and stacking), watch it
+  fail, apply the fix, watch it pass.
 - **`verification-before-completion`** / `pwa-verify` — the done-gate. No "shell fixed"
   claim without a green runtime report; several §2 entries (P-203, P-204, P-207) are only
   provable at runtime.

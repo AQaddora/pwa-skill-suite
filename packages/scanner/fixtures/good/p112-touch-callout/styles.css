@@ -1,0 +1,16 @@
+:where(button, summary, [role='button']) {
+  -webkit-touch-callout: none;
+}
+
+:where(nav a, .app-header a, .bottom-navigation a, a.icon-link) {
+  -webkit-touch-callout: none;
+}
+
+body button,
+main nav a {
+  -webkit-touch-callout: none;
+}
+
+.article-media {
+  -webkit-touch-callout: default;
+}

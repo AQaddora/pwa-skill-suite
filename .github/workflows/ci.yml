@@ -12,12 +12,25 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Run on the LTS the project targets (npm 10) and the current release
+        # (npm 11). npm 11 changed how `npm run` drains a grandchild's stdout, so
+        # a bug can be green on Node 20 and red on Node 22 — the suite must see both.
+        node-version: ['20', '22']
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install locked runtime dependencies
+        run: npm ci
+
+      - name: Install browser engines used by runtime probes
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Validate catalog against schema
         run: node packages/catalog/validate.mjs

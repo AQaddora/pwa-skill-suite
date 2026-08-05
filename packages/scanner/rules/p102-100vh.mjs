@@ -9,9 +9,13 @@ import { lineColAt, excerptAt } from '../lib/loc.mjs';
 export const ids = ['P-102'];
 
 const CSS_EXT = new Set(['.css', '.scss', '.sass', '.less']);
-const CLASS_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.js', '.ts']);
+const CLASS_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm', '.js', '.ts']);
 const VH_TOKEN = /(^|:)(min-)?h-screen$/; // optional responsive/state prefix like md:h-screen
 const VH_ARBITRARY = /(^|:)h-\[100vh\]$/;
+
+export function appliesTo({ ext }) {
+  return CSS_EXT.has(ext) || CLASS_EXT.has(ext);
+}
 
 function finding(file, line, column, excerpt) {
   return { id: 'P-102', file, line, column, excerpt, severity: 'P1', confidence: 'advisory' };

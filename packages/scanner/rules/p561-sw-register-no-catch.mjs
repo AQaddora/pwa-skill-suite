@@ -3,6 +3,7 @@
 // registration reject on MIME mismatch — silently, in production only, if nothing
 // catches it.
 import { lineColAt, excerptAt } from '../lib/loc.mjs';
+import { isServiceWorkerPluginSurface } from '../lib/applicability.mjs';
 
 export const ids = ['P-561'];
 
@@ -10,6 +11,18 @@ export const ids = ['P-561'];
 // index.html rather than a separate JS file (confirmed against a real PWA starter app).
 const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte', '.html', '.htm']);
 const REGISTER_CALL = /serviceWorker\s*\.\s*register\s*\([^)]*\)/g;
+
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
+export function relevantTo(fileObj) {
+  return appliesTo(fileObj) || isServiceWorkerPluginSurface(fileObj);
+}
+
+export function coverageComplete(fileObj) {
+  return !isServiceWorkerPluginSurface(fileObj);
+}
 
 // Walks forward through a chained-call sequence (`.then(...).catch(...)`, any number of
 // hops) looking for a `.catch(` link. Parenthesis-depth matched per hop so an arrow

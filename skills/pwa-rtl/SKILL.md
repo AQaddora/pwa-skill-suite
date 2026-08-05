@@ -1,6 +1,6 @@
 ---
 name: pwa-rtl
-description: Use to make a UI work correctly right-to-left for Arabic (and other RTL locales) — logical CSS properties, bidi isolation of embedded LTR runs, mirrored directional icons, dir/lang attributes, Arabic-capable fonts, and localised numerals. Fixes §8 RTL & i18n (P-801..P-808). Trigger phrases: "add RTL support", "make it work in Arabic", "layout is backwards in RTL", "the back arrow points the wrong way", "phone numbers scramble inside Arabic text", "font shows tofu for Arabic", "mixed English and Arabic reorders wrong".
+description: 'Use to make a UI work correctly right-to-left for Arabic (and other RTL locales) — logical CSS properties, bidi isolation of embedded LTR runs, mirrored directional icons, dir/lang attributes, Arabic-capable fonts, and localised numerals. Fixes §8 RTL & i18n (P-801..P-808). Trigger phrases: "add RTL support", "make it work in Arabic", "layout is backwards in RTL", "the back arrow points the wrong way", "phone numbers scramble inside Arabic text", "font shows tofu for Arabic", "mixed English and Arabic reorders wrong".'
 ---
 
 # pwa-rtl
@@ -11,12 +11,16 @@ Makes the app correct — not just flipped — in right-to-left locales. Covers 
 **Audit first:**
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
+
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
 
 Static detection catches physical CSS properties (P-801) and hardcoded strings well;
 mirroring and bidi correctness are `visual` — they need a rendered RTL pass. `pwa-verify`
-runs an RTL pass at runtime; several entries here are only truly confirmable that way (P-1207).
+exercises RTL only when the repository declares RTL routes or scenarios; otherwise P-1207
+remains `UNVERIFIED`.
 
 ## What it fixes
 

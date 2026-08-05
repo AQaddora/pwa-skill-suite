@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Accessibility"
+  short_description: "Audit and improve PWA accessibility"
+  default_prompt: "Use $pwa-a11y to audit and improve accessibility in this web app."

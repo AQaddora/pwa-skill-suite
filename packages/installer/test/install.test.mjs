@@ -100,8 +100,34 @@ test('an explicit destination installs a self-contained audit skill', async (t) 
     ],
     { cwd: fixtureDir },
   );
+  // The npm script wiring is proven by the exit status alone. Do NOT parse JSON out of
+  // `npm --silent run`: on npm 11 the grandchild's stdout can be truncated at the 8 KiB
+  // pipe boundary before npm drains it, corrupting the captured JSON mid-token (npm 10,
+  // as pinned in CI, happens to drain and hides this). Every other assertion in this file
+  // invokes the script directly, so read the machine-readable payload the same way here.
   assert.equal(packageVerify.status, 2, packageVerify.stderr || packageVerify.stdout);
-  assert.equal(JSON.parse(packageVerify.stdout).status, 'BLOCKED');
+
+  const installedVerifyScript = path.join(
+    skillsDir,
+    'pwa-verify',
+    'scripts',
+    'run-verify.mjs',
+  );
+  const packageVerifyDirect = run(
+    process.execPath,
+    [
+      installedVerifyScript,
+      path.join(root, 'missing-project-via-package-script'),
+      '--json',
+    ],
+    { cwd: fixtureDir },
+  );
+  assert.equal(
+    packageVerifyDirect.status,
+    2,
+    packageVerifyDirect.stderr || packageVerifyDirect.stdout,
+  );
+  assert.equal(JSON.parse(packageVerifyDirect.stdout).status, 'BLOCKED');
 
   // A sibling checkout-looking path must never shadow the installed runtime. This models
   // ~/.codex/packages (or any parent workspace) containing an unrelated catalog.

@@ -1,6 +1,6 @@
 ---
 name: pwa-audit
-description: Use when auditing an existing web app for mobile-PWA readiness — diagnoses input zoom, safe-area, service-worker caching, RTL, and 150+ other known AI-agent PWA mistakes against a machine-readable catalog. Trigger phrases: "audit this PWA", "check mobile readiness", "is this installable", "review our service worker caching", "pwa audit".
+description: 'Use when auditing an existing web app for mobile-PWA readiness — diagnoses input zoom, safe-area, service-worker caching, RTL, and 150+ other known AI-agent PWA mistakes against a machine-readable catalog. Trigger phrases: "audit this PWA", "check mobile readiness", "is this installable", "review our service worker caching", "pwa audit".'
 ---
 
 # pwa-audit
@@ -12,7 +12,7 @@ directory you point it at.
 ## What it does
 
 Runs a static scanner over a web app and renders a graded, honest report against the
-`packages/catalog` catalog of 152 known mobile-PWA failure modes. It implements the
+machine-readable `packages/catalog` of known mobile-PWA failure modes. It implements the
 subset of rules that are genuinely decidable from source (viewport-unit misuse, physical
 CSS in place of logical, `user-scalable=no`, mobile-keyboard form mistakes,
 service-worker caching/update strategy, icon-only buttons, and more). The rest of the
@@ -21,25 +21,50 @@ so rather than pretending to have checked them.
 
 ## How to run it
 
+Resolve `<pwa-audit-skill-dir>` to the directory containing this selected
+`pwa-audit/SKILL.md`, whether it came from an installation or a suite checkout. Never look
+for the suite inside the audited repository.
+
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app> --json
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>" --json
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>" --ignore 'generated/**'
 ```
+
+The audited app can be any readable repository; the wrapper resolves its shared runtime
+relative to the installed skill, never relative to the app or the current working directory.
+
+Unambiguous dependency and framework caches are ignored below the requested source root.
+Ambiguous names such as `build`, `dist`, and `out` are scanned by default because some
+repositories use them for authored source. Put confirmed generated copies in a root
+`.pwa-auditignore`, or use repeatable wrapper `--ignore <repo-relative-glob>` arguments, to
+avoid duplicate findings. To audit a built artifact, pass that artifact directory as the
+root. Do not add repository names to suite rules.
 
 Optional baseline suppression (for brownfield apps that would otherwise open with a wall
 of findings) is available through the scanner CLI directly:
 
 ```bash
-node packages/scanner/cli.mjs <path-to-app> --baseline .pwa-audit-baseline --write-baseline
-node packages/scanner/cli.mjs <path-to-app> --baseline .pwa-audit-baseline
+node "<pwa-suite-runtime>/packages/scanner/cli.mjs" "<path-to-app>" --baseline .pwa-audit-baseline --write-baseline
+node "<pwa-suite-runtime>/packages/scanner/cli.mjs" "<path-to-app>" --baseline .pwa-audit-baseline
 ```
+
+For an installed suite, `<pwa-suite-runtime>` is the sibling `.pwa-skill-suite` directory
+beside the installed skills. In a suite checkout, it is the checkout root. Resolve it from
+the selected skill location; do not infer it from the audited repository.
+
+A baseline hides matching current instances from the normal grouped list; it does not
+erase them. They remain in `baselinedFindings`, are disclosed in Markdown, and keep the
+affected catalog outcome at `FAIL` until the source finding is actually fixed.
 
 ## What the report contains
 
 - **Five outcomes, not three:** `PASS`, `FAIL`, `UNVERIFIED` (device-only — never PASS),
   `N/A` (the app has no such surface — no forms / no SW yet), and `BLOCKED` (the scan
-  could not run). Auditing a pre-conversion app does not "FAIL" every service-worker
-  entry — those come back `N/A`.
+  could not complete reliably). Missing/unreadable targets, traversal errors, bad ignore
+  patterns, and rule crashes fail closed with exit code 2 and diagnostics; absent findings
+  from a partial scan are never presented as clean. Auditing a pre-conversion app does not
+  "FAIL" every service-worker entry — those come back `N/A`.
 - **Fix-level aggregation:** findings are grouped by root cause ("1 root cause → N
   instances"), so one codemod resolves a whole group instead of N separate tickets.
 - **Grading:** P0 → P1 → P2 → advisory. Heuristic rules ship as `advisory` and rank

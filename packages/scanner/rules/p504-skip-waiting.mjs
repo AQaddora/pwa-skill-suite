@@ -4,11 +4,26 @@
 // end up talking to a new worker with stale in-memory state. Flags skipWaiting() reached
 // from the install handler when the file has no controllerchange listener anywhere.
 import { lineColAt } from '../lib/loc.mjs';
+import { isServiceWorkerPluginSurface } from '../lib/applicability.mjs';
 
 export const ids = ['P-504'];
 
+const CODE_EXT = new Set(['.js', '.ts', '.mjs', '.cjs']);
+
+export function appliesTo({ file, contents, ext }) {
+  return (
+    CODE_EXT.has(ext) &&
+    (/(?:^|\/)(?:sw|service-worker)\.[jt]s$/i.test(file) ||
+      /addEventListener\(\s*['"]install['"]/.test(contents))
+  );
+}
+
+export function relevantTo(fileObj) {
+  return appliesTo(fileObj) || isServiceWorkerPluginSurface(fileObj);
+}
+
 export function check({ file, contents, ext }) {
-  if (!['.js', '.ts', '.mjs', '.cjs'].includes(ext)) return [];
+  if (!CODE_EXT.has(ext)) return [];
 
   const install = /addEventListener\(\s*['"]install['"]/.exec(contents);
   if (!install) return [];

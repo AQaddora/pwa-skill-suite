@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readBaseline, writeBaseline, filterAgainstBaseline } from '../lib/baseline.mjs';
+import {
+  readBaseline,
+  writeBaseline,
+  filterAgainstBaseline,
+  partitionAgainstBaseline,
+} from '../lib/baseline.mjs';
 
 function tmp() {
   return mkdtempSync(join(tmpdir(), 'baseline-'));
@@ -44,4 +49,17 @@ test('filterAgainstBaseline drops baselined findings but keeps a same-file/id fi
   assert.ok(kept.some((f) => f.line === 42 && f.id === 'P-113'));
   assert.ok(kept.some((f) => f.id === 'P-801'));
   assert.ok(!kept.some((f) => f.line === 10));
+});
+
+test('partitionAgainstBaseline preserves current baselined findings as report evidence', () => {
+  const baseline = new Set(['src/a.js:10:P-113']);
+  const findings = [
+    { id: 'P-113', file: 'src/a.js', line: 10 },
+    { id: 'P-113', file: 'src/a.js', line: 11 },
+  ];
+
+  assert.deepEqual(partitionAgainstBaseline(findings, baseline), {
+    findings: [findings[1]],
+    baselinedFindings: [findings[0]],
+  });
 });

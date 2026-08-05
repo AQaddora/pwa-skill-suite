@@ -92,11 +92,11 @@ test('rule pointing at a nonexistent file produces an error naming the dead path
   );
 });
 
-test('the real catalog.json passes with zero errors and has exactly 176 entries / 40 P0', () => {
+test('the real catalog.json passes with zero errors and has exactly 177 entries / 40 P0', () => {
   const catalogPath = path.join(repoRoot, 'packages', 'catalog', 'catalog.json');
   const entries = JSON.parse(readFileSync(catalogPath, 'utf8'));
 
-  assert.equal(entries.length, 176);
+  assert.equal(entries.length, 177);
   assert.equal(entries.filter((e) => e.severity === 'P0').length, 40);
 
   const result = validateCatalog(entries, { cwd: repoRoot });

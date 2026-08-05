@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Auth State"
+  short_description: "Harden PWA authentication and state continuity"
+  default_prompt: "Use $pwa-auth-state to improve authentication and state continuity in this PWA."

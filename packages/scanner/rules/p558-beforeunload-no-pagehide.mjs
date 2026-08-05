@@ -8,6 +8,10 @@ const CODE_EXT = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', 
 const BEFOREUNLOAD = /addEventListener\(\s*['"](?:beforeunload|unload)['"]/;
 const PAGEHIDE = /addEventListener\(\s*['"]pagehide['"]/;
 
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];
   const m = BEFOREUNLOAD.exec(contents);

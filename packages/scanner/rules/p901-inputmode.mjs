@@ -8,6 +8,10 @@ export const ids = ['P-901'];
 const MARKUP_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm']);
 const HINT = /email|phone|tel|otp|code|search|url|numeric|amount/i;
 
+export function appliesTo({ ext }) {
+  return MARKUP_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!MARKUP_EXT.has(ext)) return [];
   const out = [];

@@ -19,6 +19,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install locked runtime dependencies
+        run: npm ci
+
+      - name: Install browser engines used by runtime probes
+        run: npx playwright install --with-deps chromium webkit
+
       - name: Validate catalog against schema
         run: node packages/catalog/validate.mjs
 

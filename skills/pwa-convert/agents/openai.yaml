@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Conversion"
+  short_description: "Convert web apps into reliable installable PWAs"
+  default_prompt: "Use $pwa-convert to turn this web app into a reliable installable PWA."

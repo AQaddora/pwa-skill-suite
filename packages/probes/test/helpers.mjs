@@ -21,10 +21,15 @@ export function fixturePath(kind, name) {
  * @param {string[]} [opts.routes]
  * @param {object} [opts.selectors]
  * @param {object} [opts.auth]
+ * @param {object} [opts.scenarios]
  */
-export async function runProbeAgainst(probe, fixtureDir, { engines = ['chromium'], routes = ['/'], selectors = {}, auth = null } = {}) {
+export async function runProbeAgainst(
+  probe,
+  fixtureDir,
+  { engines = ['chromium'], routes = ['/'], selectors = {}, auth = null, scenarios = {} } = {},
+) {
   const server = await serveDir(fixtureDir);
-  const config = normalizeConfig({ baseURL: server.url, routes, selectors, auth });
+  const config = normalizeConfig({ baseURL: server.url, routes, selectors, auth, scenarios });
   const harness = createHarness({ config, engines });
   try {
     return await probe.run(harness);

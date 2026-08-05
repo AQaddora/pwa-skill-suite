@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Audit"
+  short_description: "Assess mobile PWA readiness and risks"
+  default_prompt: "Use $pwa-audit to assess this web app for mobile PWA readiness."

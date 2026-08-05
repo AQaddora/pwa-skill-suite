@@ -11,6 +11,10 @@ const MARKUP_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm'])
 const INTERACTIVE = /<button[\s>]|role=["']button["']/i;
 const HAS_TOUCH_ACTION = /touch-?action/i; // matches touch-action (CSS) and touchAction (JSX)
 
+export function appliesTo({ ext }) {
+  return MARKUP_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!MARKUP_EXT.has(ext)) return [];
   const m = INTERACTIVE.exec(contents);

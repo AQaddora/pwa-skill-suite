@@ -12,6 +12,10 @@ const WS_LITERAL = /['"`]ws:\/\/(?!localhost|127\.0\.0\.1)[^'"`]*['"`]/g;
 const NEW_WEBSOCKET = /new\s+WebSocket\s*\(/;
 const ONCLOSE = /\bonclose\b|addEventListener\(\s*['"]close['"]/;
 
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];
   const out = [];

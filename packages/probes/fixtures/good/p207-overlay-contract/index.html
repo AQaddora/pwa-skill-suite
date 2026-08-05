@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { margin: 0; font-family: system-ui; }
+      #open { position: fixed; inset: auto auto 80px 8px; }
+      #legacy-surface {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        place-items: center;
+        background: rgb(0 0 0 / 50%);
+      }
+      #legacy-surface.open { display: grid; }
+      .panel { padding: 24px; background: white; }
+      .tabbar { position: fixed; inset: auto 0 0; z-index: 20; height: 56px; }
+      .page-close {
+        position: fixed;
+        inset: 8px auto auto 8px;
+        z-index: 2000;
+        min-width: 44px;
+        min-height: 44px;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="open">Open</button>
+    <button class="page-close">Unrelated page close</button>
+    <div id="legacy-surface">
+      <div class="panel">
+        Overlay
+        <button id="inside-close" data-pwa-role="overlayCloseVia">Close overlay</button>
+      </div>
+    </div>
+    <nav class="tabbar">Tabs</nav>
+    <script>
+      const surface = document.getElementById('legacy-surface');
+      document.getElementById('open').onclick = () => surface.classList.add('open');
+      document.getElementById('inside-close').onclick = () => surface.classList.remove('open');
+    </script>
+  </body>
+</html>

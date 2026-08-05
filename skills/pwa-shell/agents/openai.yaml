@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA App Shell"
+  short_description: "Build persistent mobile PWA navigation shells"
+  default_prompt: "Use $pwa-shell to build a persistent mobile navigation shell for this web app."

@@ -7,6 +7,29 @@ import { chromium, webkit } from 'playwright';
 import { cells } from './matrix.mjs';
 
 const ENGINES = { chromium, webkit };
+const AUTH_POSTCONDITION_TIMEOUT_MS = 5_000;
+
+export class HarnessBlockedError extends Error {
+  constructor(code, message, { cause } = {}) {
+    super(message, cause === undefined ? undefined : { cause });
+    this.name = 'HarnessBlockedError';
+    this.outcome = 'BLOCKED';
+    this.diagnostic = { code, message };
+  }
+}
+
+function authBlocked(code, message, cause) {
+  return new HarnessBlockedError(code, message, { cause });
+}
+
+function urlPathMatches(url, pattern) {
+  const escaped = pattern
+    .split('*')
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('.*');
+  const candidate = `${url.pathname}${url.search}${url.hash}`;
+  return new RegExp(`^${escaped}$`).test(candidate);
+}
 
 // Emulate an installed PWA: report `(display-mode: standalone)` and iOS `navigator.standalone`.
 // This is emulation — real standalone chrome (status bar, no URL bar) is device-only — but it
@@ -54,15 +77,62 @@ export function createHarness({ config, engines }) {
     if (!auth) return (authState = null);
     if (auth.storageState) return (authState = auth.storageState);
     if (typeof auth.login === 'function') {
-      const browser = await getBrowser(engines[0]);
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await auth.login(page, { baseURL: config.baseURL });
-      authState = await context.storageState();
-      await context.close();
-      return authState;
+      let context;
+      try {
+        const browser = await getBrowser(engines[0]);
+        context = await browser.newContext();
+        const page = await context.newPage();
+        await auth.login(page, { baseURL: config.baseURL });
+        authState = await context.storageState();
+        return authState;
+      } catch (error) {
+        throw authBlocked(
+          'AUTH_SEED_FAILED',
+          `Configured auth.login could not seed an authenticated browser state: ${(error?.message || String(error)).split('\n')[0]}`,
+          error,
+        );
+      } finally {
+        if (context) await context.close();
+      }
     }
     return (authState = null);
+  }
+
+  async function verifyAuthenticatedPage(page, route) {
+    const success = config.auth?.success;
+    if (success?.selector) {
+      try {
+        await page.locator(success.selector).first().waitFor({
+          state: 'attached',
+          timeout: AUTH_POSTCONDITION_TIMEOUT_MS,
+        });
+        return;
+      } catch (error) {
+        throw authBlocked(
+          'AUTH_POSTCONDITION_FAILED',
+          `Configured authentication was ineffective on ${route}: auth.success.selector did not resolve after navigation`,
+          error,
+        );
+      }
+    }
+    if (success?.urlPattern) {
+      try {
+        await page.waitForURL((url) => urlPathMatches(url, success.urlPattern), {
+          timeout: AUTH_POSTCONDITION_TIMEOUT_MS,
+        });
+        return;
+      } catch (error) {
+        throw authBlocked(
+          'AUTH_POSTCONDITION_FAILED',
+          `Configured authentication was ineffective on ${route}: the resulting same-origin URL did not match auth.success.urlPattern`,
+          error,
+        );
+      }
+    }
+    throw authBlocked(
+      'AUTH_SEED_MISSING',
+      'An authenticated page was requested without a configured auth seed and success postcondition',
+    );
   }
 
   /**
@@ -75,15 +145,36 @@ export function createHarness({ config, engines }) {
     displayMode = null,
     rtl = false,
     route = '/',
-    authenticated = false,
+    // A repository that explicitly configures auth is asking the probe matrix to use
+    // that state for its protected routes. Callers can still opt out with `false` for a
+    // deliberate anonymous journey.
+    authenticated = config.auth != null,
   } = {}) {
     const browser = await getBrowser(engine);
     const contextOpts = { viewport: { width, height } };
     if (authenticated) {
+      if (!config.auth) {
+        throw authBlocked(
+          'AUTH_SEED_MISSING',
+          'An authenticated page was requested without a configured auth seed and success postcondition',
+        );
+      }
       const state = await authStorageState();
-      if (state) contextOpts.storageState = state;
+      contextOpts.storageState = state;
     }
-    const context = await browser.newContext(contextOpts);
+    let context;
+    try {
+      context = await browser.newContext(contextOpts);
+    } catch (error) {
+      if (authenticated) {
+        throw authBlocked(
+          'AUTH_SEED_FAILED',
+          `Configured authentication state could not be applied to the browser context: ${(error?.message || String(error)).split('\n')[0]}`,
+          error,
+        );
+      }
+      throw error;
+    }
     if (displayMode === 'standalone') await context.addInitScript(standaloneShim);
     const page = await context.newPage();
     const url = new URL(route, config.baseURL).href;
@@ -92,6 +183,23 @@ export function createHarness({ config, engines }) {
       response = await page.goto(url, { waitUntil: 'load' });
     } catch {
       response = null; // navigation aborted/timed out — ok, an unresolved-status caller sees null
+    }
+    if (authenticated && (response === null || response.status() >= 400)) {
+      await context.close();
+      throw authBlocked(
+        'AUTH_POSTCONDITION_FAILED',
+        response === null
+          ? `Configured authentication was ineffective on ${route}: authenticated navigation did not produce an HTTP response`
+          : `Configured authentication was ineffective on ${route}: the authenticated request returned HTTP ${response.status()}`,
+      );
+    }
+    if (authenticated) {
+      try {
+        await verifyAuthenticatedPage(page, route);
+      } catch (error) {
+        await context.close();
+        throw error;
+      }
     }
     if (rtl) await page.evaluate(() => document.documentElement.setAttribute('dir', 'rtl'));
     const ok = response !== null && response.status() < 400;

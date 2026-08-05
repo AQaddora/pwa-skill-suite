@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Responsive Design"
+  short_description: "Improve responsive PWA layouts and performance"
+  default_prompt: "Use $pwa-responsive to improve mobile layouts, touch targets, and performance in this web app."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Native Feel"
+  short_description: "Improve mobile PWA input and interaction feel"
+  default_prompt: "Use $pwa-native-feel to improve the mobile interaction feel of this web app."

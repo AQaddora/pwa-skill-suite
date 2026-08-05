@@ -1,0 +1,12 @@
+:where(button, a, input, select, textarea, summary) {
+  touch-action: manipulation;
+}
+
+body .horizontal-carousel {
+  touch-action: pan-x;
+}
+
+html,
+body {
+  touch-action: manipulation;
+}

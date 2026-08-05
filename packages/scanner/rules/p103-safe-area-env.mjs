@@ -7,6 +7,19 @@ import { extractDeclarations } from '../lib/css.mjs';
 export const ids = ['P-103'];
 
 const CSS_EXT = new Set(['.css', '.scss', '.sass', '.less']);
+const SFC_EXT = new Set(['.vue', '.svelte']);
+
+export function appliesTo({ ext }) {
+  return CSS_EXT.has(ext);
+}
+
+// Vue/Svelte single-file components can contain authored CSS, but this rule does not yet
+// parse their `<style>` blocks (including preprocessors). Keep the catalog outcome
+// UNVERIFIED when one is present instead of letting a clean standalone stylesheet produce
+// a false PASS.
+export function relevantTo({ ext }) {
+  return CSS_EXT.has(ext) || SFC_EXT.has(ext);
+}
 
 export function check({ file, contents, ext }) {
   if (!CSS_EXT.has(ext)) return [];

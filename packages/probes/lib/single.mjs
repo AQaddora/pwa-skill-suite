@@ -17,7 +17,7 @@ export async function withPage(harness, opts = {}, fn) {
     route: opts.route || harness.config.routes[0] || '/',
     displayMode: opts.displayMode || null,
     rtl: opts.rtl || false,
-    authenticated: opts.authenticated || false,
+    authenticated: opts.authenticated ?? (harness.config.auth != null),
   });
   try {
     await installUtils(page);

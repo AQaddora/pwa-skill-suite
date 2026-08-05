@@ -33,6 +33,12 @@ export const DEVICE_ONLY_REPRODUCTION = {
     'Cold-launch the installed PWA from the Home Screen icon.',
     'If a white/blank flash shows before first paint (no splash), this fails.',
   ],
+  'P-126': [
+    'On a real iPhone, open Safari and the installed Home Screen app.',
+    'Long-press representative icon buttons, tabs, headers, and other intentional app chrome.',
+    'If iOS shows Copy/Save/Look Up on that chrome, scope touch-callout suppression to those controls only.',
+    'Long-press real content links and media too; preview, copy, and save actions must remain available there.',
+  ],
   'P-903': [
     'On a real device, focus a field low on the screen so the keyboard opens.',
     'If the keyboard covers the focused field and the app does not scroll it into view, this fails.',

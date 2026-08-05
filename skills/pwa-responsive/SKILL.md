@@ -1,6 +1,6 @@
 ---
 name: pwa-responsive
-description: Use to hunt horizontal overflow, sweep the mobile breakpoint set, fix small touch targets and layout shift, and cut first-load weight on real phones — fluid widths, string wrapping, table wrappers, image dimensions, code splitting, and mobile-throttled perf budgets. Fixes §3 responsive (P-301..P-310) and §6 performance (P-601..P-611). Trigger phrases: "page scrolls sideways on mobile", "fix horizontal overflow", "check all the breakpoints", "touch targets too small", "images cause layout shift", "bundle is too big", "slow on mid-range Android", "content jumps as it loads".
+description: 'Use to hunt horizontal overflow, sweep the mobile breakpoint set, fix small touch targets and layout shift, and cut first-load weight on real phones — fluid widths, string wrapping, table wrappers, image dimensions, code splitting, and mobile-throttled perf budgets. Fixes §3 responsive (P-301..P-310) and §6 performance (P-601..P-611). Trigger phrases: "page scrolls sideways on mobile", "fix horizontal overflow", "check all the breakpoints", "touch targets too small", "images cause layout shift", "bundle is too big", "slow on mid-range Android", "content jumps as it loads".'
 ---
 
 # pwa-responsive
@@ -12,13 +12,17 @@ phone rather than an M-series laptop. Covers §3 (**P-301..P-310**) and §6 (**P
 **Audit first:**
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
+
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
 
 Overflow and touch-target sizing are `runtime` in the catalog — `scrollWidth`/`clientWidth`
 and computed box sizes only exist once the page is laid out. A finding must **name the
 offending element**; "the page overflows" is not actionable. The runtime pack (`pwa-verify`)
-provides that; static rules here (P-302) catch a subset early.
+provides element geometry; CLS still requires a separately configured metric/audit and must
+remain `UNVERIFIED` when none ran.
 
 ## §3 — Responsive layout
 

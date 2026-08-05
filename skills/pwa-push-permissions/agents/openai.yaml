@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Push Permissions"
+  short_description: "Design safe PWA push and permission flows"
+  default_prompt: "Use $pwa-push-permissions to design safe push notification and permission flows for this PWA."

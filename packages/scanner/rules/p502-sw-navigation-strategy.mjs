@@ -3,6 +3,7 @@
 // if the navigation branch resolves `caches.match` before attempting `fetch`, a stale
 // app shell can be served indefinitely. Fires when the nav branch is cache-first.
 import { lineColAt } from '../lib/loc.mjs';
+import { isServiceWorkerPluginSurface } from '../lib/applicability.mjs';
 
 export const ids = ['P-502'];
 
@@ -10,6 +11,16 @@ const isServiceWorker = (file, contents) =>
   /(?:^|\/)(?:sw|service-worker)\.[jt]s$/i.test(file) ||
   /(?:^|\/)[^/]*worker[^/]*\.[jt]s$/i.test(file) ||
   /addEventListener\(\s*['"]fetch['"]/.test(contents);
+
+export function appliesTo({ file, contents, ext }) {
+  return ['.js', '.ts', '.mjs', '.cjs'].includes(ext) && isServiceWorker(file, contents);
+}
+
+// Server-rendered page templates cannot contain this service-worker implementation
+// concern, so their presence does not make coverage of an actual worker incomplete.
+export function relevantTo(fileObj) {
+  return appliesTo(fileObj) || isServiceWorkerPluginSurface(fileObj);
+}
 
 export function check({ file, contents, ext }) {
   if (!['.js', '.ts', '.mjs', '.cjs'].includes(ext)) return [];

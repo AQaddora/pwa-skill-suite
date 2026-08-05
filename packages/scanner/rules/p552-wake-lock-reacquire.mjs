@@ -11,6 +11,10 @@ const WAKE_LOCK_REQUEST = /wakeLock\s*\.\s*request\s*\(/;
 // "visibilitychange" (e.g. a TODO) must not count as the re-acquire listener existing.
 const VISIBILITY_CHANGE = /addEventListener\(\s*['"]visibilitychange['"]/;
 
+export function appliesTo({ ext }) {
+  return CODE_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!CODE_EXT.has(ext)) return [];
   const m = WAKE_LOCK_REQUEST.exec(contents);

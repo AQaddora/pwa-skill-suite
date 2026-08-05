@@ -5,6 +5,7 @@
 import { readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { lineColAt } from '../lib/loc.mjs';
+import { isServiceWorkerPluginSurface } from '../lib/applicability.mjs';
 
 export const ids = ['P-560'];
 
@@ -61,6 +62,14 @@ function isServiceWorker(file, contents) {
     /(?:^|\/)(?:sw|service-worker)\.[jt]s$/i.test(file) ||
     /addEventListener\(\s*['"]install['"]/.test(contents)
   );
+}
+
+export function appliesTo({ file, contents, ext }) {
+  return ['.js', '.ts', '.mjs', '.cjs'].includes(ext) && isServiceWorker(file, contents);
+}
+
+export function relevantTo(fileObj) {
+  return appliesTo(fileObj) || isServiceWorkerPluginSurface(fileObj);
 }
 
 export function check({ file, contents, ext, absFile }) {

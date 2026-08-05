@@ -9,6 +9,10 @@ const MARKUP_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm'])
 const AUTOCOMPLETE_TYPES = new Set(['email', 'password', 'tel']);
 const OTP_HINT = /otp|code/i;
 
+export function appliesTo({ ext }) {
+  return MARKUP_EXT.has(ext);
+}
+
 export function check({ file, contents, ext }) {
   if (!MARKUP_EXT.has(ext)) return [];
   const out = [];

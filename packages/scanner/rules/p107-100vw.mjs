@@ -6,9 +6,13 @@ import { lineColAt, excerptAt } from '../lib/loc.mjs';
 export const ids = ['P-107'];
 
 const CSS_EXT = new Set(['.css', '.scss', '.sass', '.less']);
-const CLASS_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.js', '.ts']);
+const CLASS_EXT = new Set(['.jsx', '.tsx', '.vue', '.svelte', '.html', '.htm', '.js', '.ts']);
 const VW_TOKEN = /(^|:)w-screen$/;
 const VW_ARBITRARY = /(^|:)w-\[100vw\]$/;
+
+export function appliesTo({ ext }) {
+  return CSS_EXT.has(ext) || CLASS_EXT.has(ext);
+}
 
 function finding(file, line, column, excerpt) {
   return { id: 'P-107', file, line, column, excerpt, severity: 'P1', confidence: 'high' };

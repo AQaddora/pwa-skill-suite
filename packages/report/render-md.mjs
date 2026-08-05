@@ -37,16 +37,80 @@ function renderGroup(group) {
 }
 
 export function renderMarkdown(model) {
-  const { summary = {}, grouped = [], blindSpots = '' } = model;
+  const {
+    status = model.blocked ? 'BLOCKED' : 'COMPLETE',
+    diagnostics = [],
+    summary = {},
+    grouped = [],
+    baselinedFindings = [],
+    outcomesByEntry = new Map(),
+    incompleteCoverageById = {},
+    blindSpots = '',
+  } = model;
   const out = [];
   out.push('# PWA audit report');
   out.push('');
+  out.push(`**Scan status:** ${status}`);
+  out.push('');
+  if (status === 'BLOCKED') {
+    out.push('> **BLOCKED:** The scanner did not complete reliably. Do not treat absent findings as PASS.');
+    out.push('>');
+    if (diagnostics.length === 0) {
+      out.push('> - `UNKNOWN_SCAN_FAILURE` — No diagnostic was supplied.');
+    } else {
+      for (const diagnostic of diagnostics) {
+        const location = diagnostic.path ? ` (${diagnostic.path})` : '';
+        out.push(`> - \`${diagnostic.code || 'SCAN_FAILURE'}\`${location} — ${diagnostic.message}`);
+      }
+    }
+    out.push('');
+  }
   out.push(
     `**Summary:** ${summary.p0 || 0} P0 · ${summary.p1 || 0} P1 · ${summary.p2 || 0} P2 · ${
       summary.advisory || 0
     } advisory`,
   );
   out.push('');
+  if (outcomesByEntry.size > 0) {
+    const outcomeCounts = { PASS: 0, FAIL: 0, UNVERIFIED: 0, 'N/A': 0, BLOCKED: 0 };
+    for (const outcome of outcomesByEntry.values()) outcomeCounts[outcome] += 1;
+    out.push(
+      `**Rule outcomes:** ${outcomeCounts.PASS} PASS · ${outcomeCounts.FAIL} FAIL · ${outcomeCounts.UNVERIFIED} UNVERIFIED · ${outcomeCounts['N/A']} N/A · ${outcomeCounts.BLOCKED} BLOCKED`,
+    );
+    out.push('');
+    if (status !== 'BLOCKED') {
+      out.push(
+        '**Interpretation:** the scan completed; this is not a readiness PASS. Review every FAIL and UNVERIFIED outcome.',
+      );
+      out.push('');
+    }
+  }
+
+  if (baselinedFindings.length > 0) {
+    const ids = [...new Set(baselinedFindings.map((finding) => finding.id))].sort();
+    const shown = ids.slice(0, 12);
+    const extra = ids.length - shown.length;
+    out.push(
+      `> **Baselined findings:** ${baselinedFindings.length} current finding${baselinedFindings.length === 1 ? '' : 's'} suppressed from the grouped list. Affected entries remain FAIL, never PASS.`,
+    );
+    out.push(`> ${shown.join(' · ')}${extra > 0 ? ` · +${extra} more` : ''}`);
+    out.push('');
+  }
+
+  const incompleteEntries = (
+    incompleteCoverageById instanceof Map
+      ? [...incompleteCoverageById.entries()]
+      : Object.entries(incompleteCoverageById)
+  ).filter(([, count]) => Number.isFinite(count) && count > 0);
+  if (incompleteEntries.length > 0) {
+    const shown = incompleteEntries.slice(0, 12).map(([id, count]) => `${id} (${count})`);
+    const extra = incompleteEntries.length - shown.length;
+    out.push(
+      `> **UNVERIFIED source coverage:** ${incompleteEntries.length} rule${incompleteEntries.length === 1 ? '' : 's'} encountered relevant source formats they cannot inspect.`,
+    );
+    out.push(`> ${shown.join(' · ')}${extra > 0 ? ` · +${extra} more` : ''}`);
+    out.push('');
+  }
   out.push(blindSpots);
   out.push('');
 
@@ -63,8 +127,12 @@ export function renderMarkdown(model) {
     for (const g of groups) out.push(renderGroup(g));
   }
   if (!anyFindings) {
-    out.push('No findings from the static rules. See the disclosure above — this is not');
-    out.push('proof of correctness.');
+    if (status === 'BLOCKED') {
+      out.push('The finding set is incomplete because the audit is BLOCKED.');
+    } else {
+      out.push('No findings from the static rules. See the disclosure above — this is not');
+      out.push('proof of correctness.');
+    }
   }
   return out.join('\n');
 }

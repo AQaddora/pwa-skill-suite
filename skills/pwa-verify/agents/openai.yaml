@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Verification"
+  short_description: "Verify PWA readiness with static and runtime checks"
+  default_prompt: "Use $pwa-verify to run the completion checks for this PWA."

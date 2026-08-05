@@ -19,13 +19,17 @@ import { aggregate } from './outcome.mjs';
  * @param {boolean} [o.authenticated]
  * @param {string}  [o.detail]
  */
-export async function elementSweep(harness, { id, cells, collect, deviceOnly = false, originOnly = false, authenticated = false, detail = '', reproduction }) {
+export async function elementSweep(harness, { id, cells, collect, deviceOnly = false, originOnly = false, authenticated, detail = '', reproduction }) {
   const routes = harness.config.routes;
   const findings = [];
   let navigationOk = true;
   for (const cell of cells) {
     for (const route of routes) {
-      const { page, close, ok } = await harness.openPage({ ...cell, route, authenticated });
+      const { page, close, ok } = await harness.openPage({
+        ...cell,
+        route,
+        authenticated: authenticated ?? (harness.config.auth != null),
+      });
       try {
         if (!ok) {
           navigationOk = false;

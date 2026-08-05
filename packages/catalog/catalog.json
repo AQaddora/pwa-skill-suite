@@ -248,7 +248,7 @@
   },
   {
     "id": "P-112",
-    "title": "Long-press pops the iOS callout menu on images/links",
+    "title": "iOS touch-callout suppression is too broad",
     "section": "ios-webkit",
     "severity": "P2",
     "detect": [
@@ -256,15 +256,15 @@
     ],
     "confidence": "high",
     "deviceOnly": false,
-    "aiWrites": null,
-    "symptom": "Long-pressing UI imagery or icon links pops iOS's callout menu (Copy/Save/Look Up), which feels like a webpage rather than an app for chrome elements.",
-    "correct": "`-webkit-touch-callout: none` on UI imagery and icon links (keep it on user content where \"save image\" is desirable).",
-    "detectNotes": "[S] scanner.",
-    "rule": null,
+    "aiWrites": "`-webkit-touch-callout: none` on `*`, roots, all anchors/images, or a content container to prevent every long-press preview.",
+    "symptom": "Broad suppression makes real content links and images lose native preview, copy, and save actions.",
+    "correct": "Apply `-webkit-touch-callout: none` only to explicit app chrome such as buttons, navigation, headers, tab bars, and icon links. Keep callouts available on user/content links and media.",
+    "detectNotes": "[S] flag `-webkit-touch-callout: none` on universal/root selectors, content containers, or global anchor/image alternatives, including broad alternatives hidden inside `:where()`/`:is()`. Permit button selectors and anchors scoped to app chrome such as navigation, headers, tab bars, and explicit icon-link classes. This presence rule detects over-broad suppression; device review is still needed to find chrome that is missing suppression.",
+    "rule": "packages/scanner/rules/p112-touch-callout.mjs",
     "probe": null,
     "verified": {
-      "ios": "18.x",
-      "chrome": "13x",
+      "ios": "UNVERIFIED (expanded scope)",
+      "chrome": "UNVERIFIED (expanded scope)",
       "date": "2026-07-30"
     }
   },
@@ -560,6 +560,28 @@
     }
   },
   {
+    "id": "P-126",
+    "title": "iOS touch callout appears on intentional app chrome",
+    "section": "ios-webkit",
+    "severity": "P2",
+    "detect": [
+      "device"
+    ],
+    "confidence": "high",
+    "deviceOnly": true,
+    "aiWrites": null,
+    "symptom": "Long-pressing an icon button, tab, or other intentional app chrome opens iOS's Copy/Save/Look Up menu and exposes webpage behavior.",
+    "correct": "On a real iOS device, identify only the chrome that should not expose content actions and apply `-webkit-touch-callout: none` to that explicit scope. Keep previews, copy, and save available on real content links and media (P-112).",
+    "detectNotes": "[D] Long-press representative app-chrome controls in installed and Safari modes. Static absence cannot prove a failure because whether an element is content or chrome is semantic; keep this UNVERIFIED until a real-device observation is recorded.",
+    "rule": null,
+    "probe": null,
+    "verified": {
+      "ios": "UNVERIFIED (expanded scope)",
+      "chrome": "UNVERIFIED (expanded scope)",
+      "date": "2026-07-30"
+    }
+  },
+  {
     "id": "P-201",
     "title": "Tab bar is a normal div in the page flow",
     "section": "app-shell",
@@ -699,7 +721,7 @@
   },
   {
     "id": "P-207",
-    "title": "Modal renders behind the fixed bar / stacking-context trap",
+    "title": "Overlay is clipped, trapped, or unreachable in the mobile viewport",
     "section": "app-shell",
     "severity": "P0",
     "detect": [
@@ -708,14 +730,14 @@
     "confidence": "advisory",
     "deviceOnly": false,
     "aiWrites": null,
-    "symptom": "A `transform`, `filter`, `backdrop-filter`, `will-change`, or `contain` on any ancestor re-parents `position: fixed` to that ancestor. The modal is then clipped or trapped — and the agent \"fixes\" it with escalating z-index, which cannot work.",
-    "correct": "Portal overlays to `document.body` (or a top-level `#overlay-root`), or use the top layer via `<dialog>` / popover. Audit ancestors for transform-family properties.",
-    "detectNotes": "Reclassified: the offending ancestor can live in any component up the tree, and identifying the actual stacking-context break requires the rendered DOM chain, not a single file's AST. Phase 2 will implement this as a computed-style/DOM sweep: assert overlay bounding box covers the viewport and sits above the tab bar.",
+    "symptom": "A transform-family ancestor can trap a fixed overlay behind app chrome. On short portrait or landscape viewports, an oversized sheet can also extend beyond the visual viewport, scroll the page instead of its own body, or leave its close control unreachable; nested overlays and RTL can expose the same failures.",
+    "correct": "Portal overlays to `document.body`/a top-level overlay root or use the top layer. Keep every open surface inside the visual viewport and safe areas, give overflowing content an internal scroll region, keep a visible reachable close control, and preserve those guarantees in RTL and nested-overlay states.",
+    "detectNotes": "[R] For each configured overlay journey, test short portrait and landscape cells in the journey's document/LTR/RTL direction. Multi-trigger journeys exercise nested or stateful overlays. Assert visible bounds remain inside the visual viewport, horizontal overflow is absent, overflowing content has a working internal scroll owner, a semantically identified close control is visible and hittable, and persistent navigation does not paint above the overlay layer. Geometry verifies the rendered result without claiming to statically identify every stacking-context ancestor.",
     "rule": null,
     "probe": "packages/probes/probes/p207-overlay-above-bar.mjs",
     "verified": {
-      "ios": "18.x",
-      "chrome": "13x",
+      "ios": "UNVERIFIED (expanded scope)",
+      "chrome": "UNVERIFIED (expanded scope)",
       "date": "2026-07-30"
     }
   },
@@ -2332,15 +2354,15 @@
     ],
     "confidence": "high",
     "deviceOnly": false,
-    "aiWrites": "`user-scalable=no, maximum-scale=1` — very often as the \"fix\" for P-101.",
+    "aiWrites": "`user-scalable=no`, `maximum-scale=1`, Next.js `userScalable: false`, root `touch-action: none`/pan-only rules, or gesture listeners that call `preventDefault()` — often as a \"fix\" for P-101 or to imitate a native shell.",
     "symptom": "WCAG 1.4.4 failure. Low-vision users cannot zoom. iOS 10+ ignores it in Safari anyway, so it fails and doesn't work.",
     "correct": "Fix input zoom with 16px fonts (P-101). Leave pinch zoom enabled. Blocking pinch zoom is a WCAG 1.4.4 failure the suite must never emit — this is a FAIL, never a suggestion.",
-    "detectNotes": "[S] grep the viewport meta content for `user-scalable=no` / `maximum-scale=1` (or <1). Crisp presence check — the suite fails this on sight.",
+    "detectNotes": "[S] fail on viewport meta `user-scalable=no|0` or `maximum-scale<=1`; Next-style `viewport`/`generateViewport` exports with `userScalable:false` or `maximumScale<=1`; document/window `gesturestart` or `gesturechange` listeners whose callback prevents default; multi-touch `touchmove` prevention; and root `html`/`body`/`:root` touch-action values that omit pinch zoom (`none` or pan-only). Do not flag `touch-action: manipulation`, including on interactive controls, because it retains pinch zoom.",
     "rule": "packages/scanner/rules/p701-user-scalable.mjs",
     "probe": null,
     "verified": {
-      "ios": "18.x",
-      "chrome": "13x",
+      "ios": "UNVERIFIED (expanded scope)",
+      "chrome": "UNVERIFIED (expanded scope)",
       "date": "2026-07-30"
     }
   },

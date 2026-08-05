@@ -36,6 +36,144 @@ test('P-207 FAILs when the overlay is behind the bar, PASSes when above it', asy
   assert.equal(good.outcome, 'PASS');
 });
 
+test('P-207 is N/A when overlay scenarios are absent and no surface is declared', async () => {
+  const result = await runProbeAgainst(p207, fixturePath('good', 'p301-overflow'));
+
+  assert.deepEqual(
+    { outcome: result.outcome, findings: result.findings, detail: result.detail },
+    {
+      outcome: 'N/A',
+      findings: [],
+      detail: 'no overlay surface or overlay journey is declared for the configured routes',
+    },
+  );
+});
+
+test('P-207 is N/A when overlay scenarios are explicitly empty and no surface is declared', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p301-overflow'),
+    { scenarios: { overlays: [] } },
+  );
+
+  assert.equal(result.outcome, 'N/A');
+  assert.equal(result.findings.length, 0);
+});
+
+test('P-207 honors the legacy selectors.overlay fallback without a journey', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-contract'),
+    {
+      selectors: {
+        overlay: '#legacy-surface',
+        overlayTrigger: '#open',
+        tabbar: '.tabbar',
+      },
+    },
+  );
+
+  assert.equal(result.outcome, 'PASS');
+  assert.equal(result.findings.length, 0);
+  assert.match(result.detail, /checked 1 overlay journey/);
+});
+
+test('P-207 treats a configured overlay trigger as a journey when the overlay mounts lazily', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-lazy'),
+    { selectors: { overlayTrigger: '#open' } },
+  );
+
+  assert.equal(result.outcome, 'PASS');
+  assert.equal(result.findings.length, 0);
+  assert.match(result.detail, /checked 1 overlay journey/);
+});
+
+test('P-207 treats an annotated live trigger as a journey when the overlay mounts lazily', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-lazy'),
+    { routes: ['/?annotated'] },
+  );
+
+  assert.equal(result.outcome, 'PASS');
+  assert.equal(result.findings.length, 0);
+  assert.match(result.detail, /checked 1 overlay journey/);
+});
+
+test('P-207 rejects an explicit close selector that only matches outside the opened overlay', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-contract'),
+    {
+      scenarios: {
+        overlays: [
+          {
+            name: 'scoped close',
+            trigger: '#open',
+            overlay: '#legacy-surface',
+            close: '.page-close',
+          },
+        ],
+      },
+      selectors: { tabbar: '.tabbar' },
+    },
+  );
+
+  assert.equal(result.outcome, 'FAIL');
+  assert.equal(result.findings.length, 4);
+  assert.ok(
+    result.findings.every((finding) => /overlay has no visible close control/.test(finding.excerpt)),
+  );
+});
+
+test('P-207 catches clipped short-viewport sheets and accepts internally scrolling geometry', async () => {
+  const bad = await runProbeAgainst(p207, fixturePath('bad', 'p207-overlay-viewport'));
+  assert.equal(bad.outcome, 'FAIL');
+  assert.match(
+    bad.findings.map((finding) => finding.excerpt).join('\n'),
+    /outside the visual viewport|horizontal overflow|without an internal scroll owner|close control is outside/,
+  );
+
+  const good = await runProbeAgainst(p207, fixturePath('good', 'p207-overlay-viewport'));
+  assert.equal(good.outcome, 'PASS');
+});
+
+test('P-207 drives a configured nested RTL overlay journey without repository-specific code', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-viewport'),
+    {
+      scenarios: {
+        overlays: [
+          {
+            name: 'nested install help',
+            triggers: ['#open', '#open-nested'],
+            overlay: '#nested',
+            close: '#close-nested',
+            direction: 'rtl',
+          },
+        ],
+      },
+    },
+  );
+
+  assert.equal(result.outcome, 'PASS');
+  assert.match(result.detail, /1 overlay journey/);
+});
+
+test('P-207 mobile overlay geometry runs in both Chromium and WebKit', async () => {
+  const result = await runProbeAgainst(
+    p207,
+    fixturePath('good', 'p207-overlay-viewport'),
+    { engines: ['chromium', 'webkit'] },
+  );
+
+  assert.equal(result.outcome, 'PASS');
+  assert.match(result.detail, /8 short portrait\/landscape engine cell/);
+});
+
 test('P-711 FAILs when background stays reachable, PASSes when inert', async () => {
   const bad = await runProbeAgainst(p711, fixturePath('bad', 'p711-inert-bg'));
   assert.equal(bad.outcome, 'FAIL');

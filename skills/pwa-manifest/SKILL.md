@@ -1,24 +1,28 @@
 ---
 name: pwa-manifest
-description: Use when an app won't install, shows the wrong icon, flashes the wrong colour on launch, or has a manifest that lint passes but browsers reject — icon generation and verification, theming, splash, and the install flow on both iOS and Chromium. Fixes §4 manifest (P-401..P-417) and §10 theming (P-1001..P-1005). Trigger phrases: "app isn't installable", "generate PWA icons", "manifest icons are the wrong size", "no install prompt on iOS", "white flash on launch", "theme-color is wrong in dark mode", "add a web manifest".
+description: 'Use when an app won''t install, shows the wrong icon, flashes the wrong colour on launch, or has a manifest that lint passes but browsers reject — icon generation and verification, theming, splash, and the install flow on both iOS and Chromium. Fixes manifest P-401..P-417 plus theming P-548 and P-1001..P-1005. Trigger phrases: "app isn''t installable", "generate PWA icons", "manifest icons are the wrong size", "no install prompt on iOS", "white flash on launch", "theme-color is wrong in dark mode", "add a web manifest".'
 ---
 
 # pwa-manifest
 
 Makes the app genuinely installable and correctly themed on both platforms: manifest
 validity, **icon generation and pixel-level verification**, splash, and the two-path
-install flow. Covers §4 (**P-401..P-417**) and §10 (**P-1001..P-1005**).
+install flow. Covers §4 (**P-401..P-417**) and theming (**P-548**, **P-1001..P-1005**).
 
 **Audit first:**
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
 
-Most of §4 is `lighthouse`-class in the catalog — it needs the **built/deployed** artefact
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
+
+Most of §4 is `lighthouse`-class in the catalog — it needs the **built/deployed** artifact
 (fetch the manifest, decode each icon, hit `start_url`), not just source. A static pass is
-not proof of installability; the authoritative check is a Lighthouse/installability audit
-(P-1104), which `pwa-verify` runs.
+not proof of installability. Unless the repository config supplies built/deployed evidence,
+run a Lighthouse/installability audit separately and keep P-1104 `UNVERIFIED`; do not imply
+that the default `pwa-verify` probe pack performs a check it did not execute.
 
 ## §4 — Manifest, install & icons
 
@@ -54,6 +58,9 @@ code paths (this is P-119, owned with `pwa-native-feel`):
 
 ## §10 — Theming & system integration
 
+- **P-548** — opt out of algorithmic forced-dark rewrites by declaring
+  `color-scheme: light dark` and shipping an intentionally designed dark theme. A light-only
+  page with no declaration lets Android/Samsung browsers rewrite brand colors and images.
 - **P-1001** — inline a **blocking** `<head>` script that reads the stored/system theme and applies it (class or `color-scheme`) **before first paint**. Installed PWAs cold-start constantly; a FOUC into a dark app is jarring.
 - **P-1002** — declare `color-scheme` (`light`/`dark`/`light dark`) so native controls, scrollbars, and form widgets match the theme.
 - **P-1003** — manifest `background_color` (the splash) equals the app's real initial background per scheme (splash ↔ first paint match).
@@ -75,8 +82,8 @@ Works standalone. When `superpowers` is available (detect **by capability** — 
 - **`test-driven-development`** — the installability audit *is* the failing test: run it,
   watch it fail, add/fix the manifest and icons, watch it pass.
 - **`verification-before-completion`** / `pwa-verify` — the done-gate. "It has a manifest"
-  is **not** "installable" (P-1104) — require a real audit pass, on both platforms
-  end-to-end (P-1205), before claiming done.
+  is **not** "installable" (P-1104). Attach the separately executed audit and both-platform
+  install evidence to the report; absent evidence remains `UNVERIFIED`.
 
 Absent superpowers: run Chrome DevTools → Application → Manifest, confirm "installable",
 decode each icon (`file`/`identify`) against its `sizes`, then walk the real install flow on

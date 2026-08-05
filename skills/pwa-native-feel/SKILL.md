@@ -1,26 +1,31 @@
 ---
 name: pwa-native-feel
-description: Use when an app "reads as a website" on iOS — rubber-band overscroll, grey tap flash, latched hover, 100vh cutoffs, notch/safe-area gaps, double-tap zoom, input-focus zoom, or the wrong mobile keyboard on forms. Fixes §1 iOS/WebKit (P-101..P-125) and §9 forms (P-901..P-908). Trigger phrases: "make it feel native on iOS", "fix the safe area / notch", "100vh is cutting off the bottom", "stop the grey tap highlight", "input zooms when I focus it", "wrong keyboard for the phone field", "OTP autofill isn't working".
+description: 'Use when an app "reads as a website" on iOS — rubber-band overscroll, grey tap flash, latched hover, 100vh cutoffs, notch/safe-area gaps, double-tap zoom, input-focus zoom, or the wrong mobile keyboard on forms. Fixes §1 iOS/WebKit (P-101..P-126) and §9 forms (P-901..P-908). Trigger phrases: "make it feel native on iOS", "fix the safe area / notch", "100vh is cutting off the bottom", "stop the grey tap highlight", "input zooms when I focus it", "wrong keyboard for the phone field", "OTP autofill isn''t working".'
 ---
 
 # pwa-native-feel
 
 Hardens the iOS/WebKit surface and the mobile keyboard so an installed app stops
-telegraphing "web page". Covers §1 (**P-101..P-125**) and §9 (**P-901..P-908**).
+telegraphing "web page". Covers §1 (**P-101..P-126**) and §9 (**P-901..P-908**).
 
 **Audit first** — many of these are static-detectable and already flagged:
 
 ```bash
-node skills/pwa-audit/scripts/run-audit.mjs <path-to-app>
+node "<pwa-audit-skill-dir>/scripts/run-audit.mjs" "<path-to-app>"
 ```
+
+Resolve `<pwa-audit-skill-dir>` from the selected `pwa-audit/SKILL.md`, not from the target
+repository.
 
 ## Two corrections this skill actively enforces (design §8)
 
 These invert requests you will receive. Be explicit, not quietly compliant.
 
 1. **Never disable pinch zoom.** This skill **refuses to emit** `user-scalable=no` /
-   `maximum-scale=1` and **fails on sight** if it finds them (**P-701**). It is a WCAG
-   1.4.4 failure *and* iOS Safari ignores it anyway — it harms users without even working.
+   `maximum-scale=1`, document-level multi-touch/gesture `preventDefault()` guards, or
+   restrictive root `touch-action`, and **fails on sight** if it finds them (**P-701**).
+   These are WCAG 1.4.4 failures; moving the restriction from viewport metadata into
+   JavaScript does not make it acceptable.
    - Input-focus zoom is fixed with **≥16px computed font-size** on controls (**P-101**), never by disabling zoom.
    - Double-tap zoom is suppressed with `touch-action: manipulation` on interactive elements (**P-110**) — do **not** justify it as "300ms delay removal"; that delay is already gone in modern browsers.
 2. **`user-select: none` on chrome only** (nav, tab bar, buttons, headers), never globally
@@ -42,13 +47,13 @@ These invert requests you will receive. Be explicit, not quietly compliant.
 | **P-109** | Wrap hover-dependent styles in `@media (hover: hover) and (pointer: fine)` so they don't latch on touch. (Check Tailwind's `hoverOnlyWhenSupported` before flagging.) |
 | **P-110** | `touch-action: manipulation` on interactive elements (see correction #1). |
 | **P-111** | Chrome/content `user-select` split (see correction #2). |
-| **P-112** | `-webkit-touch-callout: none` on UI imagery and icon links (keep it on user content where "save image" is desirable). |
+| **P-112** | `-webkit-touch-callout: none` only on intentional app chrome such as navigation controls and UI imagery. Never target all anchors or content media; preserve preview/copy/save behavior on user content. |
 | **P-113** | Every scroll lock `matchMedia`-gated with a resize listener, or fixed-body + scroll-restore. **Never** unconditional `body.style.overflow='hidden'` — the single highest-yield static check in the suite. |
 | **P-114** | Do **not** add `-webkit-overflow-scrolling: touch`; it's obsolete since iOS 13 and causes stacking-context bugs. Remove it if present. |
 | **P-115** | Every route deeper than a tab root renders an in-app back affordance, verified against `matchMedia('(display-mode: standalone)')`. |
 | **P-116** | Keep in-scope navigation in-app; open genuinely external links with explicit intent (`target="_blank" rel="noopener"`). |
 | **P-117** | Persist critical state on `visibilitychange`→`hidden`/`pagehide`; rehydrate on load. Never rely on the process surviving backgrounding. |
-| **P-118** | Feature-detect Web Push (`'PushManager' in window` + standalone), gate the UI, give iOS the Add-to-Home-Screen path first. |
+| **P-118** | Feature-detect Service Worker, PushManager, and Notification. On iOS, require genuine standalone installation and give the Add-to-Home-Screen path first; do not impose that iOS-only prerequisite on capable desktop/Android browsers. |
 | **P-119** | Two install paths: Chromium `beforeinstallprompt` **and** an iOS Safari Add-to-Home-Screen instruction sheet. (See `pwa-manifest`.) |
 | **P-120** | 180×180 opaque `apple-touch-icon` PNG, no alpha, no rounded corners. (See `pwa-manifest`.) |
 | **P-121** | `apple-touch-startup-image` per device, or accept the `background_color` splash — matched to the app background (P-1003). |
@@ -56,6 +61,7 @@ These invert requests you will receive. Be explicit, not quietly compliant.
 | **P-123** | `type="tel"` or `inputmode="numeric" pattern="[0-9]*"` for phone/OTP/PIN — never `type="number"` (spinners, wheel changes, strips leading zeros). OTP adds `autocomplete="one-time-code"`. |
 | **P-124** | Accept the native iOS wheel picker for `date`/`time` inputs, or build a fully custom component — don't style the native control as a div. |
 | **P-125** | `autocapitalize="none" autocorrect="off" spellcheck="false"` on email/username/code fields. |
+| **P-126** | Verify intentional chrome callouts on a real iOS device; do not infer missing suppression from source alone. |
 
 ## §9 — Forms & the mobile keyboard
 
@@ -75,7 +81,8 @@ These invert requests you will receive. Be explicit, not quietly compliant.
 Works standalone. When `superpowers` is available (detect **by capability** — is
 `test-driven-development` invocable now? — never by path-sniffing):
 
-- **`test-driven-development`** — write the probe (focus a control and assert
+- **`test-driven-development`** — write the probe (reject viewport caps, document-level
+  gesture cancellation, and restrictive root `touch-action`; focus a control and assert
   `visualViewport.scale === 1` and computed `font-size >= 16px`; assert
   `document.scrollingElement.scrollWidth <= clientWidth` at 320/360/390/430), watch it
   fail, fix, watch it pass.
@@ -83,5 +90,6 @@ Works standalone. When `superpowers` is available (detect **by capability** — 
   P-111, P-117, P-121 are **device-only**: they report `UNVERIFIED` in CI (Playwright
   WebKit is not iOS Safari) and must be confirmed on a real iPhone. Never mark them PASS.
 
-Absent superpowers: fix in source, then verify on a real iOS device — focus each input
-(no zoom), drag past the top (no background reveal), long-press chrome vs content.
+Absent superpowers: fix in source, then verify on a real iOS device — deliberate pinch must
+still zoom; input focus and double-tap on chrome must not. Drag past the top (no background
+reveal), then long-press chrome and content separately.

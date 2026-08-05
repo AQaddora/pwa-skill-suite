@@ -25,8 +25,19 @@ test('outcome table lists engines and sorts FAIL before PASS', () => {
 });
 
 test('skipped engines are disclosed, never hidden', () => {
-  const md = renderProbeOutcomes(RESULTS, { engines: ['chromium'], skipped: [{ engine: 'webkit', reason: 'missing libs' }] });
+  const md = renderProbeOutcomes(RESULTS, {
+    engines: ['chromium'],
+    skipped: [{ engine: 'webkit', reason: 'missing libs' }],
+    engineCoverage: {
+      status: 'BLOCKED',
+      expected: ['chromium', 'webkit'],
+      run: ['chromium'],
+      skipped: [{ engine: 'webkit', reason: 'missing libs' }],
+      missing: ['webkit'],
+    },
+  });
   assert.match(md, /webkit.*missing libs/);
+  assert.match(md, /Engine coverage: \*\*BLOCKED\*\*/);
 });
 
 test('device-only block renders reproduction steps for UNVERIFIED entries', () => {

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PWA Runtime Resilience"
+  short_description: "Make PWA runtimes resilient to disruption"
+  default_prompt: "Use $pwa-runtime-resilience to make this PWA recover cleanly from lifecycle and runtime failures."

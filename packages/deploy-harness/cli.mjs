@@ -6,6 +6,7 @@
 // arbitrary project — see the "Scope" note in the README for why (SSR apps have no static
 // output to swap; skew assertions need seeded auth/storage state the fixtures supply).
 import { runHarnessSuite } from './runner.mjs';
+import { pathToFileURL } from 'node:url';
 
 async function main(argv) {
   const json = argv.includes('--json');
@@ -18,7 +19,7 @@ async function main(argv) {
   process.exit(suite.failed ? 1 : 0);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2)).catch((err) => {
     console.error(err);
     process.exit(2);

@@ -6,8 +6,21 @@
 export const ids = ['P-514'];
 
 const CONFIG_NAMES = /(?:^|\/)(?:_headers|netlify\.toml|vercel\.json|nginx\.conf)$/i;
+const POSSIBLE_HEADER_CONFIG_NAMES =
+  /(?:^|\/)(?:firebase\.json|staticwebapp\.config\.json|wrangler\.(?:toml|json|jsonc)|app\.ya?ml|amplify\.ya?ml|render\.ya?ml|serverless\.ya?ml|cloudbuild\.ya?ml|fly\.toml|Caddyfile|\.htaccess|httpd\.conf|(?:next|nuxt|vite|astro|svelte|remix)\.config\.[cm]?[jt]s)$/i;
 const CRITICAL_PATH = /sw\.js|service-worker\.js|manifest\.(?:json|webmanifest)/i;
 const MAX_AGE = /max-age\s*[=:]\s*(\d+)/i;
+
+export function appliesTo({ file }) {
+  return CONFIG_NAMES.test(file);
+}
+
+// Unsupported application templates are not another location for response headers,
+// but an unrecognized deployment/server config means a clean supported config cannot
+// prove which header policy reaches production.
+export function relevantTo({ file }) {
+  return CONFIG_NAMES.test(file) || POSSIBLE_HEADER_CONFIG_NAMES.test(file);
+}
 
 export function check({ file, contents }) {
   if (!CONFIG_NAMES.test(file)) return [];

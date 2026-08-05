@@ -122,7 +122,17 @@ node "/path/to/skills/pwa-audit/scripts/run-audit.mjs" "/path/to/your/app"
 node "/path/to/skills/pwa-audit/scripts/run-audit.mjs" "/path/to/your/app" --json
 
 # 3. Read the report. Fix the P0 groups first, then P1.
+
+# 4. When done, run the completion gate: scanner + Playwright probes + deploy harness.
+node "/path/to/skills/pwa-verify/scripts/run-verify.mjs" "/path/to/your/app"
+
+# Runtime probes on their own (requires the browser engines installed above):
+node "/path/to/skills/.pwa-skill-suite/packages/probes/cli.mjs" "/path/to/your/app" --json
 ```
+
+The audit runs the **static scanner**; `pwa-verify` runs the scanner plus the **runtime
+probes** and the **deploy A→B harness** and renders one combined report — it is the automated
+done-gate. New to the suite? Start with the [getting-started guide](./docs/getting-started.md).
 
 Then invoke the fix skills for the areas the report flags (`pwa-shell`, `pwa-native-feel`,
 `pwa-manifest`, `pwa-offline`, `pwa-responsive`, `pwa-rtl`, `pwa-a11y`), or run the
@@ -225,6 +235,16 @@ probe.** A stranger can add one in a single sitting:
 - **Not a substitute for a real device.** Static analysis and CI WebKit have hard limits the
   report states plainly (see the device-only entries). It makes those limits legible; it
   does not pretend they don't exist.
+
+## Documentation
+
+- [Getting started](./docs/getting-started.md) — install → first audit → reading the report.
+- [Outcomes](./docs/outcomes.md) — the five-outcome model and the anti-false-PASS rules that
+  make a green verdict trustworthy.
+- [Skills](./docs/skills.md) — the 13 skills, when each applies, and the Claude vs Codex layout.
+- [Contributing](./docs/contributing.md) — repo layout, adding a catalog entry + rule + fixtures,
+  running the suite, and the Node-version expectation.
+- [Catalog](./docs/catalog.md) — the full generated list of all 177 entries.
 
 ## License
 

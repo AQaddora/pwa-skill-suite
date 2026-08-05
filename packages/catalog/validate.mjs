@@ -10,6 +10,7 @@
 // don't resolve to a real file on disk.
 
 import { readFileSync, existsSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -187,14 +188,31 @@ export function validateCatalog(entries, { cwd = process.cwd() } = {}) {
   return { ok: errors.length === 0, errors };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.url === pathToFileURL(process.argv[1]).href` silently fails whenever any
+// component of the path is a symlink: Node resolves import.meta.url to the REAL path while
+// process.argv[1] keeps the symlinked one. On macOS os.tmpdir() lives under /var -> /private/var,
+// so this entrypoint would load and exit 0 having done nothing. A silent exit 0 is the worst
+// possible failure for a verification tool — it reads as "clean". Compare canonical paths.
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   const catalogPath = path.join(__dirname, 'catalog.json');
   const entries = JSON.parse(readFileSync(catalogPath, 'utf8'));
   const { ok, errors } = validateCatalog(entries, { cwd: repoRoot });
 
   if (ok) {
     console.log(`catalog.json: ${entries.length} entries, all valid.`);
-    process.exit(0);
+    // process.exit() terminates before Node flushes an async stdout write, truncating
+    // anything larger than the pipe buffer for a caller capturing output. This message is
+    // short today, but the pattern is what bites — set the code and let stdout drain.
+    process.exitCode = 0;
   } else {
     for (const err of errors) {
       console.error(err);

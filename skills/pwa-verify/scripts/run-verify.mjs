@@ -8,6 +8,7 @@
 // (device-only) entries never block completion — they are listed explicitly instead,
 // per the project's central honesty rule.
 import { existsSync, readFileSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -481,10 +482,27 @@ async function main(argv) {
 
   const result = await runVerify(dir, { allowConfigCode, allowExternalTargets });
   console.log(jsonFlag ? result.json : result.markdown);
-  process.exit(result.status === 'BLOCKED' ? 2 : result.failed ? 1 : 0);
+  // process.exit() terminates before Node flushes an async stdout write, so a report
+  // larger than the pipe buffer (8 KiB on macOS) is silently truncated mid-token for any
+  // caller capturing the output. Set the code and let the runtime exit once stdout drains.
+  process.exitCode = result.status === 'BLOCKED' ? 2 : result.failed ? 1 : 0;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.url === pathToFileURL(process.argv[1]).href` silently fails whenever any
+// component of the path is a symlink: Node resolves import.meta.url to the REAL path while
+// process.argv[1] keeps the symlinked one. On macOS os.tmpdir() lives under /var -> /private/var,
+// so this entrypoint would load and exit 0 having done nothing. A silent exit 0 is the worst
+// possible failure for a verification tool — it reads as "clean". Compare canonical paths.
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   main(process.argv.slice(2)).catch((err) => {
     console.error(err);
     process.exit(2);

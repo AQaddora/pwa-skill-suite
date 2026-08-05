@@ -4,6 +4,7 @@
 // docs/catalog.md or (with --check) diff-checking it without writing.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -236,7 +237,12 @@ function main() {
     const onDisk = readFileSync(docPath, 'utf8');
     if (onDisk === generated) {
       console.log('docs/catalog.md: up to date with catalog.json.');
-      process.exit(0);
+      // process.exit() would terminate before Node flushes an async stdout write, so output
+      // larger than the pipe buffer (8 KiB on macOS) is truncated mid-token for any caller
+      // capturing it. Set the code instead — but process.exitCode does NOT halt execution
+      // the way process.exit() does, so the early return is load-bearing, not decorative.
+      process.exitCode = 0;
+      return;
     }
     console.error('docs/catalog.md is out of date with catalog.json. Run `node packages/catalog/generate-md.mjs` to regenerate.');
     const diskLines = onDisk.split('\n');
@@ -258,6 +264,20 @@ function main() {
   console.log(`docs/catalog.md: regenerated from ${entries.length} catalog entries.`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.url === pathToFileURL(process.argv[1]).href` silently fails whenever any
+// component of the path is a symlink: Node resolves import.meta.url to the REAL path while
+// process.argv[1] keeps the symlinked one. On macOS os.tmpdir() lives under /var -> /private/var,
+// so this entrypoint would load and exit 0 having done nothing. A silent exit 0 is the worst
+// possible failure for a verification tool — it reads as "clean". Compare canonical paths.
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   main();
 }

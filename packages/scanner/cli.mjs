@@ -5,6 +5,7 @@
 // rule execution is fail-closed: callers receive `blocked: true`, and the CLI
 // emits a BLOCKED report with a non-zero exit status.
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -424,7 +425,21 @@ export async function main(argv) {
   return scan.blocked ? BLOCKED_EXIT_CODE : 0;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.url === pathToFileURL(process.argv[1]).href` silently fails whenever any
+// component of the path is a symlink: Node resolves import.meta.url to the REAL path while
+// process.argv[1] keeps the symlinked one. On macOS os.tmpdir() lives under /var -> /private/var,
+// so this entrypoint would load and exit 0 having done nothing. A silent exit 0 is the worst
+// possible failure for a verification tool — it reads as "clean". Compare canonical paths.
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   main(process.argv.slice(2))
     .then((code) => process.exit(code))
     .catch((error) => {

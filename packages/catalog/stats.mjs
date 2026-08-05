@@ -7,6 +7,7 @@
 // entries passed in, so this can never drift from catalog.json.
 
 import { readFileSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -107,6 +108,20 @@ function main() {
   console.log(renderTable(stats));
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.url === pathToFileURL(process.argv[1]).href` silently fails whenever any
+// component of the path is a symlink: Node resolves import.meta.url to the REAL path while
+// process.argv[1] keeps the symlinked one. On macOS os.tmpdir() lives under /var -> /private/var,
+// so this entrypoint would load and exit 0 having done nothing. A silent exit 0 is the worst
+// possible failure for a verification tool — it reads as "clean". Compare canonical paths.
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   main();
 }

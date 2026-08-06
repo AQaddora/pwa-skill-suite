@@ -1,0 +1,21 @@
+/* The focus ring is removed and nothing ever replaces it. Keyboard users are lost. */
+button:focus {
+  outline: none;
+}
+
+/* A blanket reset is worse: it strips focus from every control on the page. */
+*:focus {
+  outline: 0;
+}
+
+/* Removing it via the longhand is the same defect wearing a different hat. */
+.btn-primary:focus {
+  outline-style: none;
+  color: #fff;
+}
+
+/* box-shadow: none is not a replacement — it is a second removal. */
+a:focus {
+  outline: none;
+  box-shadow: none;
+}

@@ -71,6 +71,24 @@ export function renderMarkdown(model) {
     } advisory`,
   );
   out.push('');
+  const policyExemptions = model.policyExemptions || [];
+  if (policyExemptions.length > 0) {
+    const activePolicy = model.policy || 'app';
+    const waivedFindings = policyExemptions.reduce((n, e) => n + (e.suppressedFindings || 0), 0);
+    out.push(
+      `> **Policy waivers (\`${activePolicy}\`):** ${policyExemptions.length} entr${policyExemptions.length === 1 ? 'y is' : 'ies are'} reported as N/A by audit policy, setting aside ${waivedFindings} finding${waivedFindings === 1 ? '' : 's'}. These are decisions, not clean results.`,
+      '',
+    );
+    for (const e of policyExemptions) {
+      out.push(`- **${e.id} · ${e.title}** (${e.severity}) — N/A. ${e.reason}`);
+      if (e.caveat) out.push(`  - ${e.caveat}`);
+      if (e.suppressedFindings > 0) {
+        out.push(`  - ${e.suppressedFindings} finding${e.suppressedFindings === 1 ? '' : 's'} set aside by this waiver.`);
+      }
+    }
+    out.push('', 'Re-run with `--policy document` to audit this target as a website, where nothing is waived.', '');
+  }
+
   if (outcomesByEntry.size > 0) {
     const outcomeCounts = { PASS: 0, FAIL: 0, UNVERIFIED: 0, 'N/A': 0, BLOCKED: 0 };
     for (const outcome of outcomesByEntry.values()) outcomeCounts[outcome] += 1;

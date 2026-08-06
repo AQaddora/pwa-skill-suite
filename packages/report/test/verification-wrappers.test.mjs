@@ -313,7 +313,10 @@ test('the audit wrapper preserves scanner diagnostics and exits 2 for a missing 
 test('audit and verify wrappers preserve zero coverage for unsupported source formats', async (t) => {
   const root = await unsupportedAstroFixture(t);
   const auditScript = path.join(repoRoot, 'skills', 'pwa-audit', 'scripts', 'run-audit.mjs');
-  const audit = spawnSync(process.execPath, [auditScript, root, '--json'], {
+  // This test is about COVERAGE honesty, not zoom policy — it only happens to use P-701 as
+  // its subject. Pin it to `document` so the audit CLI's app-shell waiver cannot mask the
+  // UNVERIFIED result this test exists to protect. App-policy behaviour is asserted below.
+  const audit = spawnSync(process.execPath, [auditScript, root, '--json', '--policy', 'document'], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -323,7 +326,7 @@ test('audit and verify wrappers preserve zero coverage for unsupported source fo
   assert.equal(auditReport.incompleteCoverage['P-701'], 1);
   assert.equal(auditReport.outcomes['P-701'], 'UNVERIFIED');
 
-  const auditMarkdown = spawnSync(process.execPath, [auditScript, root], {
+  const auditMarkdown = spawnSync(process.execPath, [auditScript, root, '--policy', 'document'], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -361,4 +364,48 @@ test('verify propagates target diagnostics and never probes a missing repository
   assert.equal(report.verification.status, 'BLOCKED');
   assert.equal(report.diagnostics[0].code, 'TARGET_NOT_FOUND');
   assert.equal(report.probes[0].outcome, 'BLOCKED');
+});
+
+test('the audit CLI waives app-shell zoom entries but never hides them', async (t) => {
+  const root = await unsupportedAstroFixture(t);
+  const auditScript = path.join(repoRoot, 'skills', 'pwa-audit', 'scripts', 'run-audit.mjs');
+
+  const appRun = spawnSync(process.execPath, [auditScript, root, '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(appRun.status, 0, appRun.stderr || appRun.stdout);
+  const appReport = JSON.parse(appRun.stdout);
+
+  // Default product surface is the app-shell policy.
+  assert.equal(appReport.policy, 'app');
+  assert.equal(appReport.outcomes['P-701'], 'N/A');
+  assert.equal(appReport.outcomes['P-101'], 'N/A');
+
+  // Waived, never silent: the waiver is reported with a reason for every exempt id.
+  const waivedIds = appReport.policyExemptions.map((e) => e.id).sort();
+  assert.deepEqual(waivedIds, ['P-101', 'P-701']);
+  for (const exemption of appReport.policyExemptions) {
+    assert.ok(exemption.reason && exemption.reason.length > 0, `${exemption.id} needs a reason`);
+  }
+
+  // And the markdown says so out loud, including how to turn it off.
+  const appMarkdown = spawnSync(process.execPath, [auditScript, root], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(appMarkdown.status, 0, appMarkdown.stderr || appMarkdown.stdout);
+  assert.match(appMarkdown.stdout, /Policy waivers/);
+  assert.match(appMarkdown.stdout, /--policy document/);
+
+  // The strict policy waives nothing.
+  const docRun = spawnSync(process.execPath, [auditScript, root, '--json', '--policy', 'document'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(docRun.status, 0, docRun.stderr || docRun.stdout);
+  const docReport = JSON.parse(docRun.stdout);
+  assert.equal(docReport.policy, 'document');
+  assert.deepEqual(docReport.policyExemptions, []);
+  assert.notEqual(docReport.outcomes['P-701'], 'N/A');
 });

@@ -17,7 +17,7 @@ The suite's first act on a codebase is a **read-only audit**. Here is abbreviate
 ```
 # PWA audit report
 
-**Summary:** 33 P0 · 6 P1 · 6 P2 · 18 advisory
+**Summary:** 33 P0 · 6 P1 · 6 P2 · 22 advisory
 
 **What this scan could NOT see** (static analysis has hard limits):
 - CSS-in-JS (styled-components, Emotion, vanilla-extract)
@@ -72,7 +72,7 @@ By section:
   meta            10     (plus cross-area additions shown by stats.mjs)
 
 Scanner implementation coverage:
-  rules   26 / 177  (15%)
+  rules   27 / 177  (15%)
   probes  36 / 177  (20%)
 
 Device-only (cannot be verified in CI/emulation): 11 (6% of total)

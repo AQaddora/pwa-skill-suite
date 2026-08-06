@@ -666,7 +666,7 @@ those in CI is lying. The honest design reports them as `UNVERIFIED (device-only
 ### P-705 · `outline: none` with no focus replacement   [P1] [S]
 **Breaks:** Removing focus styling "because it looked bad on mobile" breaks all keyboard users.
 **Correct:** `:focus-visible` ring.
-**Detect:** No detect method documented in the source entry. [S] flag `outline: none`/`outline: 0` rules with no paired `:focus-visible` style elsewhere in scope. Advisory: correlating the removal with a replacement elsewhere in the stylesheet is heuristic.
+**Detect:** [S] flags `outline: none|0` (and the outline-style/outline-width longhands) on selectors that target focusable elements, when no visible replacement exists in the same file. A `:focus-visible` rule setting outline/box-shadow/border/background clears every removal in that file, as does a replacement inside the same rule. Advisory: correlating a removal with a replacement is heuristic, and the rule is biased toward silence.
 
 ### P-706 · Focus not trapped in overlays, not restored on close   [P1] [R]
 **Breaks:** Focus escapes to the background page behind the modal.

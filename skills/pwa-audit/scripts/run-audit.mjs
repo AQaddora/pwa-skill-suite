@@ -48,6 +48,14 @@ function parseArgs(argv) {
       const value = arg.slice('--ignore='.length);
       if (!value) parsed.error = '--ignore requires a glob';
       else parsed.ignorePatterns.push(value);
+    } else if (arg === '--policy') {
+      const value = argv[++index];
+      if (!value || value.startsWith('--')) parsed.error = '--policy requires app|document';
+      else parsed.policy = value;
+    } else if (arg.startsWith('--policy=')) {
+      const value = arg.slice('--policy='.length);
+      if (!value) parsed.error = '--policy requires app|document';
+      else parsed.policy = value;
     } else if (arg.startsWith('--')) parsed.error = `unknown option: ${arg}`;
     else if (!parsed.dir) parsed.dir = arg;
     else parsed.error = `unexpected argument: ${arg}`;
@@ -57,9 +65,14 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+// Validate here rather than letting normalizePolicy throw from inside buildReport: a
+// mistyped flag should print usage, not a stack trace from three packages away.
+if (!args.error && args.policy != null && !['app', 'document'].includes(String(args.policy).toLowerCase())) {
+  args.error = `--policy must be app or document (got "${args.policy}")`;
+}
 if (!args.dir || args.error) {
   if (args.error) console.error(args.error);
-  console.error('Usage: run-audit.mjs <project-dir> [--json] [--ignore <glob>]');
+  console.error('Usage: run-audit.mjs <project-dir> [--json] [--ignore <glob>] [--policy app|document]');
   process.exit(1);
 }
 
@@ -91,6 +104,9 @@ const report = buildReport({
   incompleteCoverageById: scan.incompleteCoverageById,
   blocked: scan.blocked,
   diagnostics: scan.diagnostics,
+  // This suite audits PWAs, so the app-shell policy is the product default here.
+  // The waiver is always rendered; `--policy document` restores full WCAG strictness.
+  policy: args.policy ?? 'app',
 });
 console.log(args.json ? renderJson(report) : renderMarkdown(report));
 if (scan.blocked) process.exitCode = 2;

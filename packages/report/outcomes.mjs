@@ -11,8 +11,13 @@ export function deriveOutcome({
   applicableFiles = 0,
   incompleteFiles = 0,
   blocked = false,
+  policyExempt = null,
 }) {
   if (blocked) return 'BLOCKED';
+  // A policy waiver is a decision about whether this entry is a defect *on this surface*,
+  // so it outranks evidence — but only ever downward, to N/A. It can never produce a PASS,
+  // and the waived findings are still reported. See packages/report/policy.mjs.
+  if (policyExempt) return 'N/A';
   // Positive evidence outranks applicability heuristics. Surface detection can miss an
   // RTL/form/SW surface, but a rule finding is direct evidence and must never become N/A.
   if (findings.length > 0) return 'FAIL';

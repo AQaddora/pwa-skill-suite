@@ -13,6 +13,9 @@ export function renderJson(model) {
     outcomesByEntry,
     summary,
     blindSpots,
+    policy = null,
+    policyExemptions = [],
+    policyWaivedFindings = [],
   } = model;
   const outcomes = {};
   if (outcomesByEntry) {
@@ -28,6 +31,9 @@ export function renderJson(model) {
     {
       status,
       blocked,
+      policy,
+      policyExemptions,
+      policyWaivedFindings,
       diagnostics,
       summary,
       findings,

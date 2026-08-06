@@ -1,0 +1,20 @@
+/* Removing the default ring is fine when :focus-visible restores a visible one. */
+button:focus {
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+/* A replacement inside the same rule counts too. */
+.card-action:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.6);
+}
+
+/* Not a focus concern at all: no focusable target, no removal. */
+.decorative-divider {
+  border-bottom: 1px solid #e5e7eb;
+}

@@ -2,6 +2,7 @@
 // blind-spots disclosure, and a severity/confidence summary.
 import { groupByFix } from './group.mjs';
 import { deriveOutcome } from './outcomes.mjs';
+import { exemptionFor, normalizePolicy } from './policy.mjs';
 import { SCANNER_BLIND_SPOTS } from './visibility.mjs';
 
 // Sections that map to a detectable "surface". If the caller reports the surface absent,
@@ -24,6 +25,7 @@ export function buildReport({
   incompleteCoverageById = {},
   blocked = false,
   diagnostics = [],
+  policy = undefined,
 }) {
   const findingsById = new Map();
   for (const f of findings) {
@@ -36,6 +38,8 @@ export function buildReport({
     baselinedFindingsById.get(f.id).push(f);
   }
 
+  const activePolicy = normalizePolicy(policy);
+  const policyExemptions = [];
   const outcomesByEntry = new Map();
   for (const entry of catalog) {
     const entryFindings = findingsById.get(entry.id) || [];
@@ -57,11 +61,32 @@ export function buildReport({
         applicableFiles,
         incompleteFiles,
         blocked,
+        policyExempt: exemptionFor(entry.id, activePolicy),
       }),
     );
+
+    const waiver = exemptionFor(entry.id, activePolicy);
+    if (waiver) {
+      policyExemptions.push({
+        id: entry.id,
+        title: entry.title,
+        severity: entry.severity,
+        reason: waiver.reason,
+        caveat: waiver.caveat,
+        // Waived, not deleted: the reader still sees how much was set aside.
+        suppressedFindings: entryFindings.length,
+      });
+    }
   }
 
-  const grouped = groupByFix(findings, catalog);
+  // A waived entry reports N/A, so its findings must not also be counted as blocking —
+  // otherwise the summary contradicts the outcome. They stay in `findings` (nothing is
+  // deleted from the data) and are listed under the waiver section instead.
+  const waivedIds = new Set(policyExemptions.map((e) => e.id));
+  const policyWaivedFindings = findings.filter((f) => waivedIds.has(f.id));
+  const countableFindings = waivedIds.size === 0 ? findings : findings.filter((f) => !waivedIds.has(f.id));
+
+  const grouped = groupByFix(countableFindings, catalog);
   const summary = { p0: 0, p1: 0, p2: 0, advisory: 0 };
   for (const g of grouped) {
     const bucket = bucketOf(g.catalogEntry);
@@ -74,6 +99,9 @@ export function buildReport({
   return {
     status: blocked ? 'BLOCKED' : 'COMPLETE',
     blocked,
+    policy: activePolicy,
+    policyExemptions,
+    policyWaivedFindings,
     diagnostics,
     findings,
     baselinedFindings,
